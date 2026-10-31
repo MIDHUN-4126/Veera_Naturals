@@ -232,18 +232,19 @@ html.dark textarea::placeholder {
 
 /* ==================== LIGHT THEME GLASS OVERRIDES ==================== */
 html:not(.dark) .glass-card {
-  background: rgba(255, 255, 255, 0.94);
+  background: #ffffff;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e7e5e4;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 1px 3px 0 rgba(0, 0, 0, 0.03);
+  color: #1c1917;
 }
 
 html:not(.dark) .glass-sidebar {
-  background: rgba(255, 255, 255, 0.97);
+  background: #ffffff;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-right: 1px solid rgba(226, 232, 240, 0.9);
+  border-right: 1px solid #e7e5e4;
   box-shadow: 2px 0 15px -3px rgba(0, 0, 0, 0.04);
 }
 
