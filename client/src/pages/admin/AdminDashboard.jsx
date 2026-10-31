@@ -9,7 +9,7 @@ import {
   LayoutDashboard, Settings, Tag, Activity, Bell, ChevronLeft, LogOut,
   BarChart3, PieChart as PieChartIcon, Layers, Wallet, Store, Truck,
   UserCheck, Crown, Calendar, Hash, Zap, Globe, Sun, Moon, Menu,
-  ChevronsLeft, ChevronsRight, ArrowRight, ArrowLeft, TrendingDown, Box, Heart, Star
+  ChevronsLeft, ChevronsRight, ArrowRight, ArrowLeft, TrendingDown, Box, Heart, Star, ChevronDown, User
 } from 'lucide-react';
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip,
@@ -84,8 +84,8 @@ function HealthRing({ score = 92, size = 64, strokeWidth = 5 }) {
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size/2} cy={size/2} r={radius} fill="none" stroke="#292524" strokeWidth={strokeWidth} />
-        <circle cx={size/2} cy={size/2} r={radius} fill="none" stroke={color} strokeWidth={strokeWidth}
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#292524" strokeWidth={strokeWidth} />
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={color} strokeWidth={strokeWidth}
           strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round"
           style={{ transition: 'stroke-dashoffset 1s ease' }} />
       </svg>
@@ -152,6 +152,7 @@ export default function AdminDashboard() {
   const [selectedOrderDetails, setSelectedOrderDetails] = useState(null);
   const [selectedProductDrillDown, setSelectedProductDrillDown] = useState(null);
   const [selectedCustomerDetails, setSelectedCustomerDetails] = useState(null);
+  const [adminDropdownOpen, setAdminDropdownOpen] = useState(false);
   const [showFinancialDrillDown, setShowFinancialDrillDown] = useState(false);
   const [trackingNumberInput, setTrackingNumberInput] = useState('');
   const [trackingCarrierInput, setTrackingCarrierInput] = useState('Blue Dart');
@@ -453,7 +454,7 @@ export default function AdminDashboard() {
     let list = productsList.filter(p => {
       const matchesSearch = p.name.toLowerCase().includes(productSearch.toLowerCase()) || (p.sku && p.sku.toLowerCase().includes(productSearch.toLowerCase()));
       const matchesCategory = productCategoryFilter === 'all' || p.category.toLowerCase() === productCategoryFilter.toLowerCase();
-      
+
       let matchesStock = true;
       if (productStockStatus === 'low-stock' || lowStockOnly) {
         matchesStock = p.stock <= (p.lowStockThreshold || 10);
@@ -489,9 +490,9 @@ export default function AdminDashboard() {
       const matchesSearch = (o.orderNumber && o.orderNumber.toLowerCase().includes(orderSearch.toLowerCase())) ||
         (o.userName && o.userName.toLowerCase().includes(orderSearch.toLowerCase())) ||
         (o.userEmail && o.userEmail.toLowerCase().includes(orderSearch.toLowerCase()));
-      
+
       const matchesStatus = orderStatusFilter === 'all' || o.fulfillmentStatus === orderStatusFilter;
-      
+
       let matchesPayment = true;
       if (orderPaymentFilter === 'cod') {
         matchesPayment = (o.paymentMethod || '').toLowerCase().includes('cod') || (o.paymentMethod || '').toLowerCase().includes('cash');
@@ -634,16 +635,16 @@ export default function AdminDashboard() {
     const finalRev = totalRev > 0
       ? totalRev
       : (overviewCategory === 'all' && timeframe === 'all'
-          ? baselineRev
-          : (overviewCategory !== 'all'
-              ? (catSales[overviewCategory] || Math.round(baselineRev * 0.28))
-              : Math.round(baselineRev * (timeframe === '7days' ? 0.35 : timeframe === '30days' ? 0.65 : 0.85))));
+        ? baselineRev
+        : (overviewCategory !== 'all'
+          ? (catSales[overviewCategory] || Math.round(baselineRev * 0.28))
+          : Math.round(baselineRev * (timeframe === '7days' ? 0.35 : timeframe === '30days' ? 0.65 : 0.85))));
 
     const finalOrders = ordersCount > 0
       ? ordersCount
       : (overviewCategory === 'all' && timeframe === 'all'
-          ? baselineOrders
-          : Math.max(1, Math.round(baselineOrders * (timeframe === '7days' ? 0.35 : timeframe === '30days' ? 0.65 : 0.8))));
+        ? baselineOrders
+        : Math.max(1, Math.round(baselineOrders * (timeframe === '7days' ? 0.35 : timeframe === '30days' ? 0.65 : 0.8))));
 
     const finalProfit = Math.round(finalRev * 0.676);
     const finalCustomers = customerEmails.size > 0 ? customerEmails.size : Math.max(1, Math.round(baselineCustomers * (overviewCategory === 'all' ? 1 : 0.5)));
@@ -730,11 +731,10 @@ export default function AdminDashboard() {
 
   // ==================== RENDER ====================
   return (
-    <div className={`min-h-screen flex font-sans admin-scroll transition-colors duration-300 ${
-      isDark
+    <div className={`min-h-screen flex font-sans admin-scroll transition-colors duration-300 ${isDark
         ? 'bg-stone-950 text-stone-100 selection:bg-gold-500 selection:text-stone-950'
         : 'bg-[#FAF7F2] text-stone-900 selection:bg-forest-900 selection:text-gold-300'
-    }`}>
+      }`}>
 
       {/* ========== TOAST NOTIFICATION ========== */}
       {toast && (
@@ -747,14 +747,12 @@ export default function AdminDashboard() {
       )}
 
       {/* ========== SIDEBAR ========== */}
-      <aside className={`glass-sidebar fixed left-0 top-0 h-full z-50 flex flex-col transition-all duration-300 ease-in-out border-r ${
-        isDark ? 'border-stone-800/60' : 'border-stone-200/90 shadow-sm'
-      } ${sidebarCollapsed ? 'w-[72px]' : 'w-64'}`}>
-        
+      <aside className={`glass-sidebar fixed left-0 top-0 h-full z-50 flex flex-col transition-all duration-300 ease-in-out border-r ${isDark ? 'border-stone-800/60' : 'border-stone-200/90 shadow-sm'
+        } ${sidebarCollapsed ? 'w-[72px]' : 'w-64'}`}>
+
         {/* Sidebar Header */}
-        <div className={`flex items-center gap-3 px-4 py-5 border-b ${
-          isDark ? 'border-stone-800/60' : 'border-stone-200/90'
-        } ${sidebarCollapsed ? 'justify-center' : ''}`}>
+        <div className={`flex items-center gap-3 px-4 py-5 border-b ${isDark ? 'border-stone-800/60' : 'border-stone-200/90'
+          } ${sidebarCollapsed ? 'justify-center' : ''}`}>
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-forest-950 to-forest-900 border border-gold-500/40 flex items-center justify-center flex-shrink-0 shadow-md p-1">
             <img src="/images/logo-emblem.png" alt="Veera Naturals" className="h-7 w-7 object-contain drop-shadow" onError={(e) => { e.target.src = '/marketing/image3.png'; }} />
           </div>
@@ -776,29 +774,26 @@ export default function AdminDashboard() {
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
                 title={sidebarCollapsed ? item.label : ''}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-200 group relative ${
-                  isActive
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-200 group relative ${isActive
                     ? (isDark
-                        ? 'bg-gradient-to-r from-gold-500/20 to-gold-500/5 text-gold-400 border border-gold-500/20 shadow-lg shadow-gold-500/5'
-                        : 'bg-forest-900 text-gold-300 border border-forest-800 shadow-md')
+                      ? 'bg-gradient-to-r from-gold-500/20 to-gold-500/5 text-gold-400 border border-gold-500/20 shadow-lg shadow-gold-500/5'
+                      : 'bg-forest-900 text-gold-300 border border-forest-800 shadow-md')
                     : (isDark
-                        ? 'text-stone-400 hover:text-stone-200 hover:bg-stone-800/60'
-                        : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100')
-                } ${sidebarCollapsed ? 'justify-center' : ''}`}
+                      ? 'text-stone-400 hover:text-stone-200 hover:bg-stone-800/60'
+                      : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100')
+                  } ${sidebarCollapsed ? 'justify-center' : ''}`}
               >
                 {isActive && <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full ${isDark ? 'bg-gold-500' : 'bg-gold-400'}`} />}
-                <Icon className={`w-[18px] h-[18px] flex-shrink-0 ${
-                  isActive
+                <Icon className={`w-[18px] h-[18px] flex-shrink-0 ${isActive
                     ? (isDark ? 'text-gold-400' : 'text-gold-300')
                     : (isDark ? 'text-stone-500 group-hover:text-stone-300' : 'text-stone-500 group-hover:text-forest-900')
-                }`} />
+                  }`} />
                 {!sidebarCollapsed && <span>{item.label}</span>}
                 {!sidebarCollapsed && item.badge !== null && item.badge > 0 && (
-                  <span className={`ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                    isActive
+                  <span className={`ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full ${isActive
                       ? (isDark ? 'bg-gold-500/20 text-gold-400' : 'bg-gold-400/20 text-gold-300')
                       : (isDark ? 'bg-stone-800 text-stone-400' : 'bg-stone-200 text-stone-700')
-                  }`}>{item.badge}</span>
+                    }`}>{item.badge}</span>
                 )}
               </button>
             );
@@ -806,14 +801,12 @@ export default function AdminDashboard() {
         </nav>
 
         {/* Sidebar Footer */}
-        <div className={`px-3 py-4 border-t space-y-2 ${
-          isDark ? 'border-stone-800/60' : 'border-stone-200/90'
-        } ${sidebarCollapsed ? 'px-2' : ''}`}>
+        <div className={`px-3 py-4 border-t space-y-2 ${isDark ? 'border-stone-800/60' : 'border-stone-200/90'
+          } ${sidebarCollapsed ? 'px-2' : ''}`}>
           {/* Store Health */}
           {!sidebarCollapsed && (
-            <div className={`flex items-center gap-3 p-3 rounded-xl border animate-fade-in ${
-              isDark ? 'bg-stone-900/60 border-stone-800/40 text-stone-200' : 'bg-stone-50 border-stone-200 text-stone-800'
-            }`}>
+            <div className={`flex items-center gap-3 p-3 rounded-xl border animate-fade-in ${isDark ? 'bg-stone-900/60 border-stone-800/40 text-stone-200' : 'bg-stone-50 border-stone-200 text-stone-800'
+              }`}>
               <HealthRing score={storeHealthScore} size={40} strokeWidth={4} />
               <div>
                 <span className="text-[10px] uppercase tracking-wider text-stone-500 font-bold">Store Health</span>
@@ -821,13 +814,12 @@ export default function AdminDashboard() {
               </div>
             </div>
           )}
-          
+
           {/* Collapse Toggle */}
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className={`w-full flex items-center justify-center gap-2 py-2 transition-colors rounded-lg text-xs ${
-              isDark ? 'text-stone-500 hover:text-gold-400 hover:bg-stone-800/40' : 'text-stone-600 hover:text-forest-900 hover:bg-stone-100'
-            }`}
+            className={`w-full flex items-center justify-center gap-2 py-2 transition-colors rounded-lg text-xs ${isDark ? 'text-stone-500 hover:text-gold-400 hover:bg-stone-800/40' : 'text-stone-600 hover:text-forest-900 hover:bg-stone-100'
+              }`}
           >
             {sidebarCollapsed ? <ChevronsRight className="w-4 h-4" /> : <><ChevronsLeft className="w-4 h-4" /><span>Collapse</span></>}
           </button>
@@ -836,11 +828,10 @@ export default function AdminDashboard() {
 
       {/* ========== MAIN CONTENT ========== */}
       <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarCollapsed ? 'ml-[72px]' : 'ml-64'}`}>
-        
+
         {/* Top Header Bar */}
-        <header className={`sticky top-0 z-40 backdrop-blur-xl border-b px-6 py-3 transition-colors ${
-          isDark ? 'bg-stone-950/85 border-stone-800/50 text-stone-100' : 'bg-white/95 border-stone-200/90 text-stone-900 shadow-sm'
-        }`}>
+        <header className={`sticky top-0 z-40 backdrop-blur-xl border-b px-6 py-3 transition-colors ${isDark ? 'bg-stone-950/85 border-stone-800/50 text-stone-100' : 'bg-white/95 border-stone-200/90 text-stone-900 shadow-sm'
+          }`}>
           <div className="flex items-center justify-between">
             {/* Left: Page Title, Drill Up Button & Breadcrumb */}
             <div className="flex items-center gap-3">
@@ -856,11 +847,10 @@ export default function AdminDashboard() {
                     setOrderPaymentFilter('all');
                     setOrderDateFilter('all');
                   }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-xs ${
-                    isDark
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-xs ${isDark
                       ? 'bg-stone-900/90 hover:bg-stone-800 text-gold-400 border-stone-800 hover:border-gold-500/40'
                       : 'bg-white hover:bg-stone-100 text-forest-900 border-stone-300 shadow-xs'
-                  }`}
+                    }`}
                   title="Drill Up / Return to Executive BI Overview"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
@@ -885,11 +875,10 @@ export default function AdminDashboard() {
                       setOrderPaymentFilter('all');
                       setOrderDateFilter('all');
                     }}
-                    className={`hover:underline transition-colors ${
-                      activeTab === 'analytics'
+                    className={`hover:underline transition-colors ${activeTab === 'analytics'
                         ? (isDark ? 'text-gold-400 font-bold' : 'text-forest-900 font-bold')
                         : (isDark ? 'text-stone-400 hover:text-stone-200' : 'text-stone-600 hover:text-stone-950')
-                    }`}
+                      }`}
                   >
                     BI Overview
                   </button>
@@ -908,18 +897,16 @@ export default function AdminDashboard() {
             {/* Right: Actions */}
             <div className="flex items-center gap-3">
               {/* Live Status */}
-              <div className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[11px] ${
-                isDark ? 'bg-stone-900/80 border-stone-800 text-stone-400' : 'bg-stone-100 border-stone-200 text-stone-700'
-              }`}>
+              <div className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[11px] ${isDark ? 'bg-stone-900/80 border-stone-800 text-stone-400' : 'bg-stone-100 border-stone-200 text-stone-700'
+                }`}>
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 <Database className="w-3 h-3 text-emerald-400" />
                 <span>Database: <strong className="text-emerald-500">Live</strong></span>
               </div>
 
               {/* Clock */}
-              <div className={`hidden lg:flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-xl border ${
-                isDark ? 'bg-stone-900/60 border-stone-800 text-stone-400' : 'bg-stone-100 border-stone-200 text-stone-700'
-              }`}>
+              <div className={`hidden lg:flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-xl border ${isDark ? 'bg-stone-900/60 border-stone-800 text-stone-400' : 'bg-stone-100 border-stone-200 text-stone-700'
+                }`}>
                 <Clock className={`w-3 h-3 ${isDark ? 'text-gold-400' : 'text-forest-800'}`} />
                 <span>{clock.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
               </div>
@@ -928,11 +915,10 @@ export default function AdminDashboard() {
               <button
                 onClick={toggleTheme}
                 title={isDark ? "Switch to Light Theme" : "Switch to Dark Theme"}
-                className={`p-2 rounded-xl border flex items-center gap-1.5 text-xs font-bold transition-all shadow-sm ${
-                  isDark
+                className={`p-2 rounded-xl border flex items-center gap-1.5 text-xs font-bold transition-all shadow-sm ${isDark
                     ? 'bg-stone-900/80 hover:bg-stone-800 text-gold-400 border-stone-800 hover:border-gold-500/40'
                     : 'bg-stone-100 hover:bg-stone-200 text-forest-900 border-stone-200 hover:border-forest-600'
-                }`}
+                  }`}
               >
                 {isDark ? (
                   <>
@@ -951,11 +937,10 @@ export default function AdminDashboard() {
               <div className="relative">
                 <button
                   onClick={() => setShowNotifications(!showNotifications)}
-                  className={`relative p-2 rounded-xl transition-colors border ${
-                    totalNotifications > 0
+                  className={`relative p-2 rounded-xl transition-colors border ${totalNotifications > 0
                       ? 'bg-amber-950/30 border-amber-800/50 text-amber-400'
                       : (isDark ? 'bg-stone-900/60 border-stone-800 text-stone-400 hover:text-stone-200' : 'bg-stone-100 border-stone-200 text-stone-600 hover:text-stone-900')
-                  }`}
+                    }`}
                 >
                   <Bell className="w-4 h-4" />
                   {totalNotifications > 0 && (
@@ -965,9 +950,8 @@ export default function AdminDashboard() {
                   )}
                 </button>
                 {showNotifications && (
-                  <div className={`absolute right-0 mt-2 w-80 border rounded-2xl shadow-2xl p-4 space-y-3 z-50 animate-fade-in-scale ${
-                    isDark ? 'bg-stone-900 border-stone-700 text-stone-100' : 'bg-white border-stone-200 text-stone-900 shadow-xl'
-                  }`}>
+                  <div className={`absolute right-0 mt-2 w-80 border rounded-2xl shadow-2xl p-4 space-y-3 z-50 animate-fade-in-scale ${isDark ? 'bg-stone-900 border-stone-700 text-stone-100' : 'bg-white border-stone-200 text-stone-900 shadow-xl'
+                    }`}>
                     <div className="flex items-center justify-between">
                       <h4 className="font-bold text-sm">Notifications</h4>
                       <button onClick={() => setShowNotifications(false)}><X className="w-4 h-4 text-stone-500" /></button>
@@ -999,44 +983,143 @@ export default function AdminDashboard() {
 
               {/* Export Dropdown */}
               <div className="relative group">
-                <button className={`flex items-center gap-1.5 text-[11px] font-semibold px-3 py-2 rounded-xl border transition-colors ${
-                  isDark ? 'bg-stone-900/60 hover:bg-stone-800 text-stone-300 border-stone-800' : 'bg-stone-100 hover:bg-stone-200 text-stone-700 border-stone-200'
-                }`}>
+                <button className={`flex items-center gap-1.5 text-[11px] font-semibold px-3 py-2 rounded-xl border transition-colors ${isDark ? 'bg-stone-900/60 hover:bg-stone-800 text-stone-300 border-stone-800' : 'bg-stone-100 hover:bg-stone-200 text-stone-700 border-stone-200'
+                  }`}>
                   <Download className={`w-3.5 h-3.5 ${isDark ? 'text-gold-400' : 'text-forest-900'}`} />
                   <span className="hidden sm:inline">Export</span>
                 </button>
-                <div className={`absolute right-0 mt-1 w-48 border rounded-xl shadow-2xl py-1 hidden group-hover:block z-50 ${
-                  isDark ? 'bg-stone-900 border-stone-700 text-stone-300' : 'bg-white border-stone-200 text-stone-700 shadow-xl'
-                }`}>
-                  <button onClick={handleExportOrdersCSV} className={`w-full text-left px-3.5 py-2 text-xs flex items-center gap-2 ${
-                    isDark ? 'text-stone-300 hover:bg-stone-800 hover:text-gold-400' : 'text-stone-700 hover:bg-stone-100 hover:text-forest-950'
+                <div className={`absolute right-0 mt-1 w-48 border rounded-xl shadow-2xl py-1 hidden group-hover:block z-50 ${isDark ? 'bg-stone-900 border-stone-700 text-stone-300' : 'bg-white border-stone-200 text-stone-700 shadow-xl'
                   }`}>
+                  <button onClick={handleExportOrdersCSV} className={`w-full text-left px-3.5 py-2 text-xs flex items-center gap-2 ${isDark ? 'text-stone-300 hover:bg-stone-800 hover:text-gold-400' : 'text-stone-700 hover:bg-stone-100 hover:text-forest-950'
+                    }`}>
                     <FileText className="w-3.5 h-3.5" /> Export Orders (CSV)
                   </button>
-                  <button onClick={handleExportProductsCSV} className={`w-full text-left px-3.5 py-2 text-xs flex items-center gap-2 ${
-                    isDark ? 'text-stone-300 hover:bg-stone-800 hover:text-gold-400' : 'text-stone-700 hover:bg-stone-100 hover:text-forest-950'
-                  }`}>
+                  <button onClick={handleExportProductsCSV} className={`w-full text-left px-3.5 py-2 text-xs flex items-center gap-2 ${isDark ? 'text-stone-300 hover:bg-stone-800 hover:text-gold-400' : 'text-stone-700 hover:bg-stone-100 hover:text-forest-950'
+                    }`}>
                     <Package className="w-3.5 h-3.5" /> Export Inventory (CSV)
                   </button>
                 </div>
               </div>
 
               {/* Refresh */}
-              <button onClick={fetchDashboardStats} className={`p-2 rounded-xl border transition-colors ${
-                isDark ? 'bg-stone-900/60 hover:bg-stone-800 border-stone-800 text-stone-400 hover:text-gold-400' : 'bg-stone-100 hover:bg-stone-200 border-stone-200 text-stone-600 hover:text-forest-900'
-              }`}>
+              <button onClick={fetchDashboardStats} className={`p-2 rounded-xl border transition-colors ${isDark ? 'bg-stone-900/60 hover:bg-stone-800 border-stone-800 text-stone-400 hover:text-gold-400' : 'bg-stone-100 hover:bg-stone-200 border-stone-200 text-stone-600 hover:text-forest-900'
+                }`}>
                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-gold-500' : ''}`} />
               </button>
 
-              {/* Admin Avatar */}
-              <div className={`flex items-center gap-2 pl-3 border-l ${isDark ? 'border-stone-800' : 'border-stone-200'}`}>
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-gold-500 to-gold-700 flex items-center justify-center text-stone-950 font-bold text-xs shadow-sm">
-                  {(user?.name || 'A').charAt(0).toUpperCase()}
-                </div>
-                {!sidebarCollapsed && (
-                  <div className="hidden md:block">
-                    <p className={`text-xs font-bold leading-tight ${isDark ? 'text-stone-200' : 'text-stone-900'}`}>{user?.name || 'Admin'}</p>
-                    <p className="text-[10px] text-gold-500 font-semibold">Administrator</p>
+              {/* Admin Avatar & Dropdown */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setAdminDropdownOpen(!adminDropdownOpen)}
+                  className={`flex items-center gap-2.5 pl-3 border-l py-1.5 px-3 rounded-2xl transition-all cursor-pointer ${
+                    isDark 
+                      ? 'border-stone-800 hover:bg-stone-800/60 text-stone-200' 
+                      : 'border-stone-200 hover:bg-stone-100 text-stone-800 shadow-2xs'
+                  } ${adminDropdownOpen ? (isDark ? 'bg-stone-800 ring-1 ring-gold-500/40' : 'bg-stone-100 ring-1 ring-forest-600/30') : ''}`}
+                  title="Click for Profile, Storefront & Sign Out"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-gold-500 to-gold-700 flex items-center justify-center text-stone-950 font-bold text-xs shadow-sm ring-1 ring-black/10">
+                    {(user?.name || 'A').charAt(0).toUpperCase()}
+                  </div>
+                  {!sidebarCollapsed && (
+                    <div className="hidden md:block text-left">
+                      <p className={`text-xs font-bold leading-tight ${isDark ? 'text-stone-200' : 'text-stone-900'}`}>
+                        {user?.name || 'Admin'}
+                      </p>
+                      <p className="text-[10px] text-gold-600 dark:text-gold-400 font-semibold flex items-center gap-1">
+                        <span>Administrator</span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
+                      </p>
+                    </div>
+                  )}
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${adminDropdownOpen ? 'rotate-180 text-gold-500' : 'text-stone-400'}`} />
+                </button>
+
+                {/* Dropdown Menu (Mirroring Navbar behavior) */}
+                {adminDropdownOpen && (
+                  <div
+                    className={`absolute right-0 mt-2.5 w-64 rounded-2xl shadow-2xl py-2 border z-50 animate-fade-in-scale ${
+                      isDark ? 'bg-stone-900 border-stone-700 text-stone-100' : 'bg-white border-stone-200 text-stone-800 shadow-xl'
+                    }`}
+                    onMouseLeave={() => setAdminDropdownOpen(false)}
+                  >
+                    <div className={`px-4 py-3 border-b ${isDark ? 'border-stone-800' : 'border-stone-100'}`}>
+                      <p className="text-[10px] uppercase font-bold tracking-wider text-stone-400">Signed in as</p>
+                      <p className={`text-sm font-bold truncate ${isDark ? 'text-stone-100' : 'text-forest-900'}`}>
+                        {user?.name || 'Veera Administrator'}
+                      </p>
+                      <p className="text-xs text-stone-500 truncate mt-0.5">
+                        {user?.email || 'admin@veeranaturals.com'}
+                      </p>
+                      <div className="flex items-center gap-1.5 mt-2">
+                        <span className="inline-block text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-gold-500/20 text-gold-600 dark:text-gold-400 border border-gold-500/30">
+                          {user?.role || 'Administrator'}
+                        </span>
+                        <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                          Active Session
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="py-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAdminDropdownOpen(false);
+                          navigate('/profile');
+                        }}
+                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-left transition-colors ${
+                          isDark ? 'hover:bg-stone-800 text-stone-200 hover:text-gold-400' : 'hover:bg-stone-50 text-stone-700 hover:text-forest-900'
+                        }`}
+                      >
+                        <User className="w-4 h-4 text-gold-500" />
+                        <span>My Profile & Customer Orders</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAdminDropdownOpen(false);
+                          navigate('/');
+                        }}
+                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-left transition-colors ${
+                          isDark ? 'hover:bg-stone-800 text-stone-200 hover:text-gold-400' : 'hover:bg-stone-50 text-stone-700 hover:text-forest-900'
+                        }`}
+                      >
+                        <Store className="w-4 h-4 text-emerald-500" />
+                        <span>Customer Storefront</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAdminDropdownOpen(false);
+                          setActiveTab('analytics');
+                        }}
+                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-left transition-colors ${
+                          isDark ? 'hover:bg-stone-800 text-stone-200 hover:text-gold-400' : 'hover:bg-stone-50 text-stone-700 hover:text-forest-900'
+                        }`}
+                      >
+                        <LayoutDashboard className="w-4 h-4 text-blue-500" />
+                        <span>BI Executive Overview</span>
+                      </button>
+                    </div>
+
+                    <div className={`pt-1 border-t ${isDark ? 'border-stone-800' : 'border-stone-100'}`}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAdminDropdownOpen(false);
+                          logout();
+                          navigate('/');
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-red-600 hover:bg-red-500/10 text-left transition-colors"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span>Sign Out / Exit BI</span>
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -1071,18 +1154,16 @@ export default function AdminDashboard() {
               {/* Filter Controls Bar */}
               <div className="flex flex-wrap items-center justify-between gap-3">
                 {/* Timeframe Filter */}
-                <div className={`flex items-center gap-1.5 p-1 rounded-xl border text-xs ${
-                  isDark ? 'bg-stone-900/60 border-stone-800/60' : 'bg-white border-stone-300 shadow-xs'
-                }`}>
+                <div className={`flex items-center gap-1.5 p-1 rounded-xl border text-xs ${isDark ? 'bg-stone-900/60 border-stone-800/60' : 'bg-white border-stone-300 shadow-xs'
+                  }`}>
                   {['7days', '30days', 'quarter', 'all'].map(t => (
                     <button
                       key={t}
                       onClick={() => setTimeframe(t)}
-                      className={`px-3 py-1.5 rounded-lg font-bold capitalize transition-all duration-200 ${
-                        timeframe === t
+                      className={`px-3 py-1.5 rounded-lg font-bold capitalize transition-all duration-200 ${timeframe === t
                           ? (isDark ? 'bg-gold-500 text-stone-950 shadow-md' : 'bg-forest-900 text-gold-300 shadow-sm')
                           : (isDark ? 'text-stone-400 hover:text-stone-200 hover:bg-stone-800/40' : 'text-stone-600 hover:text-stone-950 hover:bg-stone-100 font-semibold')
-                      }`}
+                        }`}
                     >
                       {t === '7days' ? 'Last 7D' : t === '30days' ? 'Last 30D' : t === 'quarter' ? 'Quarter' : 'All Time'}
                     </button>
@@ -1098,15 +1179,14 @@ export default function AdminDashboard() {
                     <button
                       key={cat}
                       onClick={() => setOverviewCategory(cat)}
-                      className={`text-xs font-bold px-3 py-1.5 rounded-xl border transition-all ${
-                        overviewCategory === cat
+                      className={`text-xs font-bold px-3 py-1.5 rounded-xl border transition-all ${overviewCategory === cat
                           ? (isDark
-                              ? 'bg-gold-500 text-stone-950 border-gold-400 shadow-sm'
-                              : 'bg-forest-900 text-gold-300 border-forest-900 shadow-sm')
+                            ? 'bg-gold-500 text-stone-950 border-gold-400 shadow-sm'
+                            : 'bg-forest-900 text-gold-300 border-forest-900 shadow-sm')
                           : (isDark
-                              ? 'bg-stone-900/60 text-stone-400 border-stone-800 hover:text-stone-200'
-                              : 'bg-white text-stone-700 border-stone-300 hover:text-stone-950 hover:bg-stone-50 shadow-xs')
-                      }`}
+                            ? 'bg-stone-900/60 text-stone-400 border-stone-800 hover:text-stone-200'
+                            : 'bg-white text-stone-700 border-stone-300 hover:text-stone-950 hover:bg-stone-50 shadow-xs')
+                        }`}
                     >
                       {cat === 'all' ? 'All Categories' : cat}
                     </button>
@@ -1120,9 +1200,8 @@ export default function AdminDashboard() {
                 {/* Revenue Card (Click to open Financial Drill-Down) */}
                 <div
                   onClick={() => setShowFinancialDrillDown(true)}
-                  className={`glass-card rounded-2xl p-5 hover-lift animate-fade-in-scale delay-1 group cursor-pointer border transition-all ${
-                    isDark ? 'hover:border-gold-500/40' : 'hover:border-forest-600/40 shadow-xs'
-                  }`}
+                  className={`glass-card rounded-2xl p-5 hover-lift animate-fade-in-scale delay-1 group cursor-pointer border transition-all ${isDark ? 'hover:border-gold-500/40' : 'hover:border-forest-600/40 shadow-xs'
+                    }`}
                   title="Click to drill down into Financial & Margin Intelligence"
                 >
                   <div className="flex items-start justify-between">
@@ -1143,9 +1222,8 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-2">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 ${
-                        isDark ? 'bg-gold-500/10 border border-gold-500/20 text-gold-400' : 'bg-gold-50 border border-gold-300 text-forest-950'
-                      }`}>
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 ${isDark ? 'bg-gold-500/10 border border-gold-500/20 text-gold-400' : 'bg-gold-50 border border-gold-300 text-forest-950'
+                        }`}>
                         <DollarSign className="w-5 h-5" />
                       </div>
                       <MiniSparkline data={revenueSparkline} color={isDark ? "#C6A45B" : "#123E30"} />
@@ -1156,9 +1234,8 @@ export default function AdminDashboard() {
                 {/* Gross Profit Card (Click to open Financial Drill-Down) */}
                 <div
                   onClick={() => setShowFinancialDrillDown(true)}
-                  className={`glass-card rounded-2xl p-5 hover-lift animate-fade-in-scale delay-2 group cursor-pointer border transition-all ${
-                    isDark ? 'hover:border-emerald-500/40' : 'hover:border-emerald-600/40 shadow-xs'
-                  }`}
+                  className={`glass-card rounded-2xl p-5 hover-lift animate-fade-in-scale delay-2 group cursor-pointer border transition-all ${isDark ? 'hover:border-emerald-500/40' : 'hover:border-emerald-600/40 shadow-xs'
+                    }`}
                   title="Click to drill down into Financial & Margin Intelligence"
                 >
                   <div className="flex items-start justify-between">
@@ -1179,9 +1256,8 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-2">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 ${
-                        isDark ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' : 'bg-emerald-50 border border-emerald-300 text-emerald-700'
-                      }`}>
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 ${isDark ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' : 'bg-emerald-50 border border-emerald-300 text-emerald-700'
+                        }`}>
                         <TrendingUp className="w-5 h-5" />
                       </div>
                     </div>
@@ -1198,9 +1274,8 @@ export default function AdminDashboard() {
                     else if (timeframe === '30days') setOrderDateFilter('30d');
                     else setOrderDateFilter('all');
                   }}
-                  className={`glass-card rounded-2xl p-5 hover-lift animate-fade-in-scale delay-3 group cursor-pointer border transition-all ${
-                    isDark ? 'hover:border-blue-500/40' : 'hover:border-blue-600/40 shadow-xs'
-                  }`}
+                  className={`glass-card rounded-2xl p-5 hover-lift animate-fade-in-scale delay-3 group cursor-pointer border transition-all ${isDark ? 'hover:border-blue-500/40' : 'hover:border-blue-600/40 shadow-xs'
+                    }`}
                   title="Click to drill down into Orders Fulfillment"
                 >
                   <div className="flex items-start justify-between">
@@ -1221,9 +1296,8 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-2">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 ${
-                        isDark ? 'bg-blue-500/10 border border-blue-500/20 text-blue-400' : 'bg-blue-50 border border-blue-300 text-blue-700'
-                      }`}>
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 ${isDark ? 'bg-blue-500/10 border border-blue-500/20 text-blue-400' : 'bg-blue-50 border border-blue-300 text-blue-700'
+                        }`}>
                         <ShoppingCart className="w-5 h-5" />
                       </div>
                       <MiniSparkline data={ordersSparkline} color="#3b82f6" />
@@ -1237,9 +1311,8 @@ export default function AdminDashboard() {
                     setActiveTab('users');
                     setUserSearch('');
                   }}
-                  className={`glass-card rounded-2xl p-5 hover-lift animate-fade-in-scale delay-4 group cursor-pointer border transition-all ${
-                    isDark ? 'hover:border-purple-500/40' : 'hover:border-purple-600/40 shadow-xs'
-                  }`}
+                  className={`glass-card rounded-2xl p-5 hover-lift animate-fade-in-scale delay-4 group cursor-pointer border transition-all ${isDark ? 'hover:border-purple-500/40' : 'hover:border-purple-600/40 shadow-xs'
+                    }`}
                   title="Click to drill down into Customer CRM"
                 >
                   <div className="flex items-start justify-between">
@@ -1260,9 +1333,8 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-2">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 ${
-                        isDark ? 'bg-purple-500/10 border border-purple-500/20 text-purple-400' : 'bg-purple-50 border border-purple-300 text-purple-700'
-                      }`}>
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 ${isDark ? 'bg-purple-500/10 border border-purple-500/20 text-purple-400' : 'bg-purple-50 border border-purple-300 text-purple-700'
+                        }`}>
                         <Users className="w-5 h-5" />
                       </div>
                     </div>
@@ -1281,14 +1353,12 @@ export default function AdminDashboard() {
                     if (overviewCategory !== 'all') setProductCategoryFilter(overviewCategory);
                     else setProductCategoryFilter('all');
                   }}
-                  className={`glass-card rounded-xl p-4 hover-lift animate-fade-in delay-5 flex items-center gap-3 cursor-pointer group border transition-all ${
-                    isDark ? 'hover:border-gold-500/30' : 'hover:border-stone-400 shadow-xs'
-                  }`}
+                  className={`glass-card rounded-xl p-4 hover-lift animate-fade-in delay-5 flex items-center gap-3 cursor-pointer group border transition-all ${isDark ? 'hover:border-gold-500/30' : 'hover:border-stone-400 shadow-xs'
+                    }`}
                   title="Click to drill down into Inventory Products"
                 >
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110 ${
-                    isDark ? 'bg-stone-800 text-gold-400' : 'bg-stone-100 text-stone-800'
-                  }`}>
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110 ${isDark ? 'bg-stone-800 text-gold-400' : 'bg-stone-100 text-stone-800'
+                    }`}>
                     <Wallet className="w-4 h-4" />
                   </div>
                   <div>
@@ -1309,14 +1379,12 @@ export default function AdminDashboard() {
                     if (overviewCategory !== 'all') setProductCategoryFilter(overviewCategory);
                     else setProductCategoryFilter('all');
                   }}
-                  className={`glass-card rounded-xl p-4 hover-lift animate-fade-in delay-6 flex items-center gap-3 cursor-pointer group border transition-all ${
-                    isDark ? 'hover:border-amber-500/40' : 'hover:border-amber-600/40 shadow-xs'
-                  }`}
+                  className={`glass-card rounded-xl p-4 hover-lift animate-fade-in delay-6 flex items-center gap-3 cursor-pointer group border transition-all ${isDark ? 'hover:border-amber-500/40' : 'hover:border-amber-600/40 shadow-xs'
+                    }`}
                   title="Click to drill down into Low Stock Formulations"
                 >
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110 ${
-                    isDark ? 'bg-amber-950/40 text-amber-400' : 'bg-amber-50 text-amber-700 border border-amber-200'
-                  }`}>
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110 ${isDark ? 'bg-amber-950/40 text-amber-400' : 'bg-amber-50 text-amber-700 border border-amber-200'
+                    }`}>
                     <AlertTriangle className="w-4 h-4" />
                   </div>
                   <div>
@@ -1335,14 +1403,12 @@ export default function AdminDashboard() {
                     if (overviewCategory !== 'all') setProductCategoryFilter(overviewCategory);
                     else setProductCategoryFilter('all');
                   }}
-                  className={`glass-card rounded-xl p-4 hover-lift animate-fade-in delay-7 flex items-center gap-3 cursor-pointer group border transition-all ${
-                    isDark ? 'hover:border-forest-500/40' : 'hover:border-forest-600/40 shadow-xs'
-                  }`}
+                  className={`glass-card rounded-xl p-4 hover-lift animate-fade-in delay-7 flex items-center gap-3 cursor-pointer group border transition-all ${isDark ? 'hover:border-forest-500/40' : 'hover:border-forest-600/40 shadow-xs'
+                    }`}
                   title="Click to drill down into Product Catalog"
                 >
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110 ${
-                    isDark ? 'bg-forest-950 text-forest-300' : 'bg-forest-50 text-forest-800 border border-forest-200'
-                  }`}>
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110 ${isDark ? 'bg-forest-950 text-forest-300' : 'bg-forest-50 text-forest-800 border border-forest-200'
+                    }`}>
                     <Box className="w-4 h-4" />
                   </div>
                   <div>
@@ -1354,14 +1420,12 @@ export default function AdminDashboard() {
 
                 <div
                   onClick={() => setActiveTab('audit')}
-                  className={`glass-card rounded-xl p-4 hover-lift animate-fade-in delay-8 flex items-center gap-3 border cursor-pointer group transition-all ${
-                    isDark ? 'hover:border-emerald-500/40' : 'hover:border-emerald-600/40 shadow-xs'
-                  }`}
+                  className={`glass-card rounded-xl p-4 hover-lift animate-fade-in delay-8 flex items-center gap-3 border cursor-pointer group transition-all ${isDark ? 'hover:border-emerald-500/40' : 'hover:border-emerald-600/40 shadow-xs'
+                    }`}
                   title="Click to drill down into Operations & Audit Trail"
                 >
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110 ${
-                    isDark ? 'bg-emerald-950/40 text-emerald-400' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                  }`}>
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110 ${isDark ? 'bg-emerald-950/40 text-emerald-400' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    }`}>
                     <CheckCircle2 className="w-4 h-4" />
                   </div>
                   <div>
@@ -1394,11 +1458,10 @@ export default function AdminDashboard() {
                       </span>
                       <button
                         onClick={() => setShowFinancialDrillDown(true)}
-                        className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all flex items-center gap-1 ${
-                          isDark
+                        className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all flex items-center gap-1 ${isDark
                             ? 'bg-gold-500/10 text-gold-400 border-gold-500/30 hover:bg-gold-500/20'
                             : 'bg-gold-50 text-forest-900 border-gold-300 hover:bg-gold-100'
-                        }`}
+                          }`}
                         title="Open Financial & Margin Drill-Down"
                       >
                         Financial Drill-Down →
@@ -1414,12 +1477,12 @@ export default function AdminDashboard() {
                       <AreaChart data={overviewFilteredData?.trend || []}>
                         <defs>
                           <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor={isDark ? "#C6A45B" : "#123E30"} stopOpacity={0.8}/>
-                            <stop offset="95%" stopColor={isDark ? "#C6A45B" : "#123E30"} stopOpacity={0}/>
+                            <stop offset="5%" stopColor={isDark ? "#C6A45B" : "#123E30"} stopOpacity={0.8} />
+                            <stop offset="95%" stopColor={isDark ? "#C6A45B" : "#123E30"} stopOpacity={0} />
                           </linearGradient>
                           <linearGradient id="colorProf" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.7}/>
-                            <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.7} />
+                            <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#292524" : "#e7e5e4"} />
@@ -1496,11 +1559,10 @@ export default function AdminDashboard() {
                       <div
                         key={idx}
                         onClick={() => setOverviewCategory(overviewCategory === item.category ? 'all' : item.category)}
-                        className={`flex items-center justify-between p-1.5 rounded-lg cursor-pointer transition-colors group ${
-                          overviewCategory === item.category
+                        className={`flex items-center justify-between p-1.5 rounded-lg cursor-pointer transition-colors group ${overviewCategory === item.category
                             ? (isDark ? 'bg-gold-500/20 text-gold-400 font-bold' : 'bg-forest-900/10 text-forest-950 font-bold')
                             : (isDark ? 'hover:bg-stone-800/40 text-stone-400' : 'hover:bg-stone-100 text-stone-700')
-                        }`}
+                          }`}
                         title="Click to drill down into this category"
                       >
                         <div className="flex items-center gap-2">
@@ -1657,11 +1719,10 @@ export default function AdminDashboard() {
                         <div
                           key={i}
                           onClick={() => setSelectedProductDrillDown(targetProd)}
-                          className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer group hover-lift ${
-                            isDark
+                          className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer group hover-lift ${isDark
                               ? 'bg-stone-900/40 border-stone-800/30 hover:bg-stone-800/60 hover:border-gold-500/30'
                               : 'bg-stone-50/80 border-stone-200 hover:bg-white hover:border-forest-600/30 shadow-xs'
-                          }`}
+                            }`}
                           title="Click to drill down into product analytics & formulation details"
                         >
                           <div className="flex items-center gap-3">
@@ -1725,9 +1786,8 @@ export default function AdminDashboard() {
                         <div
                           key={item.id}
                           onClick={() => setSelectedProductDrillDown(fullItem || item)}
-                          className={`flex items-center justify-between p-3 rounded-xl border transition-colors cursor-pointer group hover-lift ${
-                            isDark ? 'bg-amber-950/10 border-amber-800/20 hover:bg-amber-950/20' : 'bg-amber-50 border-amber-200 hover:bg-amber-100/60'
-                          }`}
+                          className={`flex items-center justify-between p-3 rounded-xl border transition-colors cursor-pointer group hover-lift ${isDark ? 'bg-amber-950/10 border-amber-800/20 hover:bg-amber-950/20' : 'bg-amber-50 border-amber-200 hover:bg-amber-100/60'
+                            }`}
                           title="Click to drill down into product details"
                         >
                           <div>
@@ -1758,11 +1818,10 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <button
                     onClick={() => { setActiveTab('products'); handleOpenCreateProduct(); }}
-                    className={`flex items-center gap-2.5 p-3 rounded-xl border transition-all text-sm group ${
-                      isDark
+                    className={`flex items-center gap-2.5 p-3 rounded-xl border transition-all text-sm group ${isDark
                         ? 'bg-stone-800/40 border-stone-700/40 text-stone-300 hover:text-gold-400 hover:bg-forest-900/30'
                         : 'bg-stone-50 border-stone-200 text-stone-800 hover:bg-stone-100 shadow-xs'
-                    }`}
+                      }`}
                   >
                     <div className="w-8 h-8 rounded-lg bg-forest-900/40 flex items-center justify-center group-hover:bg-forest-900 transition-colors">
                       <Plus className="w-4 h-4 text-forest-300" />
@@ -1771,11 +1830,10 @@ export default function AdminDashboard() {
                   </button>
                   <button
                     onClick={() => setActiveTab('orders')}
-                    className={`flex items-center gap-2.5 p-3 rounded-xl border transition-all text-sm group ${
-                      isDark
+                    className={`flex items-center gap-2.5 p-3 rounded-xl border transition-all text-sm group ${isDark
                         ? 'bg-stone-800/40 border-stone-700/40 text-stone-300 hover:text-blue-400 hover:bg-blue-950/30'
                         : 'bg-stone-50 border-stone-200 text-stone-800 hover:bg-stone-100 shadow-xs'
-                    }`}
+                      }`}
                   >
                     <div className="w-8 h-8 rounded-lg bg-blue-950/40 flex items-center justify-center group-hover:bg-blue-950 transition-colors">
                       <Truck className="w-4 h-4 text-blue-300" />
@@ -1784,11 +1842,10 @@ export default function AdminDashboard() {
                   </button>
                   <button
                     onClick={() => setActiveTab('coupons')}
-                    className={`flex items-center gap-2.5 p-3 rounded-xl border transition-all text-sm group ${
-                      isDark
+                    className={`flex items-center gap-2.5 p-3 rounded-xl border transition-all text-sm group ${isDark
                         ? 'bg-stone-800/40 border-stone-700/40 text-stone-300 hover:text-purple-400 hover:bg-purple-950/30'
                         : 'bg-stone-50 border-stone-200 text-stone-800 hover:bg-stone-100 shadow-xs'
-                    }`}
+                      }`}
                   >
                     <div className="w-8 h-8 rounded-lg bg-purple-950/40 flex items-center justify-center group-hover:bg-purple-950 transition-colors">
                       <Tag className="w-4 h-4 text-purple-300" />
@@ -1797,11 +1854,10 @@ export default function AdminDashboard() {
                   </button>
                   <button
                     onClick={() => setActiveTab('users')}
-                    className={`flex items-center gap-2.5 p-3 rounded-xl border transition-all text-sm group ${
-                      isDark
+                    className={`flex items-center gap-2.5 p-3 rounded-xl border transition-all text-sm group ${isDark
                         ? 'bg-stone-800/40 border-stone-700/40 text-stone-300 hover:text-gold-400 hover:bg-gold-500/10'
                         : 'bg-stone-50 border-stone-200 text-stone-800 hover:bg-stone-100 shadow-xs'
-                    }`}
+                      }`}
                   >
                     <div className="w-8 h-8 rounded-lg bg-gold-500/10 flex items-center justify-center group-hover:bg-gold-500/20 transition-colors">
                       <Users className="w-4 h-4 text-gold-500" />
@@ -1823,9 +1879,8 @@ export default function AdminDashboard() {
                   <p className="text-xs text-stone-500">Create, update, analyze, and manage all botanical formulations</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button onClick={handleExportProductsCSV} className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl border transition-colors ${
-                    isDark ? 'text-stone-300 bg-stone-800 hover:bg-stone-700 border-stone-700' : 'text-stone-700 bg-white hover:bg-stone-100 border-stone-300 shadow-xs'
-                  }`}>
+                  <button onClick={handleExportProductsCSV} className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl border transition-colors ${isDark ? 'text-stone-300 bg-stone-800 hover:bg-stone-700 border-stone-700' : 'text-stone-700 bg-white hover:bg-stone-100 border-stone-300 shadow-xs'
+                    }`}>
                     <Download className={`w-3.5 h-3.5 ${isDark ? 'text-gold-400' : 'text-forest-900'}`} /> Export CSV
                   </button>
                   <button onClick={handleOpenCreateProduct} className="flex items-center gap-1.5 bg-gold-500 hover:bg-gold-600 text-stone-950 text-xs font-bold px-4 py-2 rounded-xl shadow-md transition-all hover:shadow-lg">
@@ -1844,22 +1899,20 @@ export default function AdminDashboard() {
                       placeholder="Search formulations by name, herb, or SKU..."
                       value={productSearch}
                       onChange={(e) => setProductSearch(e.target.value)}
-                      className={`w-full rounded-xl pl-9 pr-4 py-2.5 text-xs transition-colors focus:outline-none ${
-                        isDark
+                      className={`w-full rounded-xl pl-9 pr-4 py-2.5 text-xs transition-colors focus:outline-none ${isDark
                           ? 'bg-stone-900/60 border border-stone-800 text-stone-100 placeholder:text-stone-500 focus:border-gold-500/50'
                           : 'bg-white border border-stone-300 text-stone-900 placeholder:text-stone-400 focus:border-forest-600 shadow-xs'
-                      }`}
+                        }`}
                     />
                   </div>
 
                   <select
                     value={productCategoryFilter}
                     onChange={(e) => setProductCategoryFilter(e.target.value)}
-                    className={`rounded-xl px-3 py-2.5 text-xs font-semibold focus:outline-none ${
-                      isDark
+                    className={`rounded-xl px-3 py-2.5 text-xs font-semibold focus:outline-none ${isDark
                         ? 'bg-stone-900/60 border border-stone-800 text-stone-300 focus:border-gold-500/50'
                         : 'bg-white border border-stone-300 text-stone-800 focus:border-forest-600 shadow-xs'
-                    }`}
+                      }`}
                   >
                     <option value="all">All Categories ({productsList.length})</option>
                     <option value="Hair Care">Hair Care</option>
@@ -1871,11 +1924,10 @@ export default function AdminDashboard() {
                   <select
                     value={productSortBy}
                     onChange={(e) => setProductSortBy(e.target.value)}
-                    className={`rounded-xl px-3 py-2.5 text-xs font-semibold focus:outline-none ${
-                      isDark
+                    className={`rounded-xl px-3 py-2.5 text-xs font-semibold focus:outline-none ${isDark
                         ? 'bg-stone-900/60 border border-stone-800 text-stone-300 focus:border-gold-500/50'
                         : 'bg-white border border-stone-300 text-stone-800 focus:border-forest-600 shadow-xs'
-                    }`}
+                      }`}
                   >
                     <option value="featured">Sort: Featured</option>
                     <option value="price-low">Price: Low to High</option>
@@ -1900,15 +1952,14 @@ export default function AdminDashboard() {
                     <button
                       key={pill.id}
                       onClick={() => { setProductStockStatus(pill.id); setLowStockOnly(false); }}
-                      className={`text-xs font-bold px-3 py-1 rounded-full border transition-all ${
-                        productStockStatus === pill.id
+                      className={`text-xs font-bold px-3 py-1 rounded-full border transition-all ${productStockStatus === pill.id
                           ? (isDark
-                              ? 'bg-gold-500 text-stone-950 border-gold-400 shadow-sm'
-                              : 'bg-forest-900 text-gold-300 border-forest-900 shadow-sm')
+                            ? 'bg-gold-500 text-stone-950 border-gold-400 shadow-sm'
+                            : 'bg-forest-900 text-gold-300 border-forest-900 shadow-sm')
                           : (isDark
-                              ? 'bg-stone-900/60 text-stone-400 border-stone-800 hover:text-stone-200'
-                              : 'bg-white text-stone-600 border-stone-300 hover:text-stone-900 shadow-xs')
-                      }`}
+                            ? 'bg-stone-900/60 text-stone-400 border-stone-800 hover:text-stone-200'
+                            : 'bg-white text-stone-600 border-stone-300 hover:text-stone-900 shadow-xs')
+                        }`}
                     >
                       {pill.label}
                     </button>
@@ -1942,29 +1993,27 @@ export default function AdminDashboard() {
                               <img src={p.image || '/marketing/IMG-20260804-WA0013.jpg'} alt="" className="w-9 h-9 rounded-lg object-cover bg-stone-800 border border-stone-700/40 group-hover:scale-105 transition-transform" />
                               <div>
                                 <p className={`font-bold line-clamp-1 group-hover:text-gold-500 transition-colors ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>{p.name}</p>
-                                <p className="text-[10px] text-stone-500">{p.sku || 'N/A'} • <span className="text-gold-500 font-semibold">Inspect</span></p>
+                                <p className="text-[10px] text-stone-500">{p.sku || 'N/A'} • <span className={isDark ? 'text-gold-500' : 'text-forest-700'} style={{fontWeight: 600}}>Inspect</span></p>
                               </div>
                             </div>
                           </td>
                           <td className="px-4 py-3">
-                            <span className={`text-[10px] font-bold px-2 py-1 rounded-lg border ${
-                              isDark ? 'bg-stone-800 text-stone-300 border-stone-700' : 'bg-stone-100 text-stone-700 border-stone-200'
-                            }`}>{p.category}</span>
+                            <span className={`text-[10px] font-bold px-2 py-1 rounded-lg border ${isDark ? 'bg-stone-800 text-stone-300 border-stone-700' : 'bg-stone-100 text-stone-700 border-stone-200'
+                              }`}>{p.category}</span>
                           </td>
                           <td className={`px-4 py-3 text-right font-bold ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>₹{p.price}</td>
                           <td className="px-4 py-3 text-right">
-                            <span className={`font-bold px-2 py-0.5 rounded-full text-[11px] ${
-                              p.stock === 0
-                                ? 'bg-red-950/40 text-red-400 border border-red-800/40'
+                            <span className={`font-bold px-2.5 py-1 rounded-full text-[11px] border ${p.stock === 0
+                                ? (isDark ? 'bg-red-950/40 text-red-400 border-red-800/40' : 'bg-red-100 text-red-800 border-red-300 font-bold')
                                 : p.stock <= (p.lowStockThreshold || 10)
-                                ? 'bg-amber-950/40 text-amber-400 border border-amber-800/40'
-                                : 'bg-emerald-950/30 text-emerald-400 border border-emerald-800/30'
-                            }`}>
+                                  ? (isDark ? 'bg-amber-950/40 text-amber-400 border-amber-800/40' : 'bg-amber-100 text-amber-800 border-amber-300 font-bold')
+                                  : (isDark ? 'bg-emerald-950/30 text-emerald-400 border-emerald-800/30' : 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold')
+                              }`}>
                               {p.stock} units
                             </span>
                           </td>
                           <td className="px-4 py-3 text-right">
-                            <span className="flex items-center gap-1 justify-end text-gold-400 font-semibold">
+                            <span className={`flex items-center gap-1 justify-end font-semibold ${isDark ? 'text-gold-400' : 'text-amber-600'}`}>
                               <Star className="w-3 h-3 fill-current" /> {p.rating || 'N/A'}
                             </span>
                           </td>
@@ -1972,20 +2021,19 @@ export default function AdminDashboard() {
                             <div className="flex items-center justify-center gap-1.5">
                               <button
                                 onClick={() => setSelectedProductDrillDown(p)}
-                                className={`p-1.5 rounded-lg border transition-colors ${
-                                  isDark ? 'bg-gold-500/10 border-gold-500/30 text-gold-400 hover:bg-gold-500/20' : 'bg-gold-50 border-gold-300 text-forest-900 hover:bg-gold-100'
-                                }`}
+                                className={`p-1.5 rounded-lg border transition-colors ${isDark ? 'bg-gold-500/10 border-gold-500/30 text-gold-400 hover:bg-gold-500/20' : 'bg-gold-50 border-gold-300 text-forest-900 hover:bg-gold-100'
+                                  }`}
                                 title="Drill Down: Product Analytics & Formulation Details"
                               >
                                 <Eye className="w-3.5 h-3.5" />
                               </button>
-                              <button onClick={() => handleQuickStockAdjust(p.id, 10, p.name)} className="p-1.5 rounded-lg bg-emerald-900/40 text-emerald-300 hover:bg-emerald-800 transition-colors" title="+10 Stock">
+                              <button onClick={() => handleQuickStockAdjust(p.id, 10, p.name)} className={`p-1.5 rounded-lg border transition-colors ${isDark ? 'bg-emerald-900/40 text-emerald-300 border-emerald-800/30 hover:bg-emerald-800' : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'}`} title="+10 Stock">
                                 <Plus className="w-3.5 h-3.5" />
                               </button>
-                              <button onClick={() => handleOpenEditProduct(p)} className="p-1.5 rounded-lg bg-blue-900/40 text-blue-300 hover:bg-blue-800 transition-colors" title="Edit Formulation">
+                              <button onClick={() => handleOpenEditProduct(p)} className={`p-1.5 rounded-lg border transition-colors ${isDark ? 'bg-blue-900/40 text-blue-300 border-blue-800/30 hover:bg-blue-800' : 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'}`} title="Edit Formulation">
                                 <Edit className="w-3.5 h-3.5" />
                               </button>
-                              <button onClick={() => handleDeleteProduct(p.id, p.name)} className="p-1.5 rounded-lg bg-red-900/40 text-red-300 hover:bg-red-800 transition-colors" title="Delete">
+                              <button onClick={() => handleDeleteProduct(p.id, p.name)} className={`p-1.5 rounded-lg border transition-colors ${isDark ? 'bg-red-900/40 text-red-300 border-red-800/30 hover:bg-red-800' : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'}`} title="Delete">
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
                             </div>
@@ -2010,9 +2058,8 @@ export default function AdminDashboard() {
                   <h2 className={`font-serif text-xl font-bold ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>Order Fulfillment & Tracking</h2>
                   <p className="text-xs text-stone-500">Track shipments, manage delivery status, and print customer tax invoices</p>
                 </div>
-                <button onClick={handleExportOrdersCSV} className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl border transition-colors ${
-                  isDark ? 'text-stone-300 bg-stone-800 hover:bg-stone-700 border-stone-700' : 'text-stone-700 bg-white hover:bg-stone-100 border-stone-300 shadow-xs'
-                }`}>
+                <button onClick={handleExportOrdersCSV} className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl border transition-colors ${isDark ? 'text-stone-300 bg-stone-800 hover:bg-stone-700 border-stone-700' : 'text-stone-700 bg-white hover:bg-stone-100 border-stone-300 shadow-xs'
+                  }`}>
                   <Download className={`w-3.5 h-3.5 ${isDark ? 'text-gold-400' : 'text-forest-900'}`} /> Export CSV
                 </button>
               </div>
@@ -2027,22 +2074,20 @@ export default function AdminDashboard() {
                       placeholder="Search by order #, customer name, email, or city..."
                       value={orderSearch}
                       onChange={(e) => setOrderSearch(e.target.value)}
-                      className={`w-full rounded-xl pl-9 pr-4 py-2.5 text-xs transition-colors focus:outline-none ${
-                        isDark
+                      className={`w-full rounded-xl pl-9 pr-4 py-2.5 text-xs transition-colors focus:outline-none ${isDark
                           ? 'bg-stone-900/60 border border-stone-800 text-stone-100 placeholder:text-stone-500 focus:border-gold-500/50'
                           : 'bg-white border border-stone-300 text-stone-900 placeholder:text-stone-400 focus:border-forest-600 shadow-xs'
-                      }`}
+                        }`}
                     />
                   </div>
 
                   <select
                     value={orderPaymentFilter}
                     onChange={(e) => setOrderPaymentFilter(e.target.value)}
-                    className={`rounded-xl px-3 py-2.5 text-xs font-semibold focus:outline-none ${
-                      isDark
+                    className={`rounded-xl px-3 py-2.5 text-xs font-semibold focus:outline-none ${isDark
                         ? 'bg-stone-900/60 border border-stone-800 text-stone-300 focus:border-gold-500/50'
                         : 'bg-white border border-stone-300 text-stone-800 focus:border-forest-600 shadow-xs'
-                    }`}
+                      }`}
                   >
                     <option value="all">All Payment Types</option>
                     <option value="prepaid">Prepaid (UPI / Cards)</option>
@@ -2052,11 +2097,10 @@ export default function AdminDashboard() {
                   <select
                     value={orderDateFilter}
                     onChange={(e) => setOrderDateFilter(e.target.value)}
-                    className={`rounded-xl px-3 py-2.5 text-xs font-semibold focus:outline-none ${
-                      isDark
+                    className={`rounded-xl px-3 py-2.5 text-xs font-semibold focus:outline-none ${isDark
                         ? 'bg-stone-900/60 border border-stone-800 text-stone-300 focus:border-gold-500/50'
                         : 'bg-white border border-stone-300 text-stone-800 focus:border-forest-600 shadow-xs'
-                    }`}
+                      }`}
                   >
                     <option value="all">Date: All Time</option>
                     <option value="today">Today (Last 24h)</option>
@@ -2081,15 +2125,14 @@ export default function AdminDashboard() {
                     <button
                       key={s.id}
                       onClick={() => setOrderStatusFilter(s.id)}
-                      className={`text-xs font-bold px-3 py-1 rounded-full border transition-all ${
-                        orderStatusFilter === s.id
+                      className={`text-xs font-bold px-3 py-1 rounded-full border transition-all ${orderStatusFilter === s.id
                           ? (isDark
-                              ? 'bg-gold-500 text-stone-950 border-gold-400 shadow-sm'
-                              : 'bg-forest-900 text-gold-300 border-forest-900 shadow-sm')
+                            ? 'bg-gold-500 text-stone-950 border-gold-400 shadow-sm'
+                            : 'bg-forest-900 text-gold-300 border-forest-900 shadow-sm')
                           : (isDark
-                              ? 'bg-stone-900/60 text-stone-400 border-stone-800 hover:text-stone-200'
-                              : 'bg-white text-stone-600 border-stone-300 hover:text-stone-900 shadow-xs')
-                      }`}
+                            ? 'bg-stone-900/60 text-stone-400 border-stone-800 hover:text-stone-200'
+                            : 'bg-white text-stone-600 border-stone-300 hover:text-stone-900 shadow-xs')
+                        }`}
                     >
                       {s.label}
                     </button>
@@ -2100,26 +2143,30 @@ export default function AdminDashboard() {
               {/* Orders List */}
               <div className="space-y-3">
                 {filteredOrders.map((o) => {
-                  const statusColors = {
+                  const statusColors = isDark ? {
                     pending: 'text-purple-400 bg-purple-950/30 border-purple-800/40',
                     processing: 'text-amber-400 bg-amber-950/30 border-amber-800/40',
                     shipped: 'text-blue-400 bg-blue-950/30 border-blue-800/40',
                     delivered: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40',
                     cancelled: 'text-red-400 bg-red-950/30 border-red-800/40'
+                  } : {
+                    pending: 'text-purple-800 bg-purple-100 border-purple-300 font-bold',
+                    processing: 'text-amber-800 bg-amber-100 border-amber-300 font-bold',
+                    shipped: 'text-blue-800 bg-blue-100 border-blue-300 font-bold',
+                    delivered: 'text-emerald-800 bg-emerald-100 border-emerald-300 font-bold',
+                    cancelled: 'text-red-800 bg-red-100 border-red-300 font-bold'
                   };
                   return (
                     <div
                       key={o.id}
                       onClick={() => setSelectedOrderDetails(o)}
-                      className={`glass-card rounded-2xl p-4 transition-all cursor-pointer group hover-lift border ${
-                        isDark ? 'hover:border-gold-500/30' : 'hover:border-forest-600/30 shadow-xs'
-                      }`}
+                      className={`glass-card rounded-2xl p-4 transition-all cursor-pointer group hover-lift border ${isDark ? 'hover:border-gold-500/30' : 'hover:border-forest-600/30 shadow-xs'
+                        }`}
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${
-                            isDark ? 'bg-stone-800/80 border-stone-700 text-stone-300' : 'bg-stone-100 border-stone-200 text-stone-700'
-                          }`}>
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${isDark ? 'bg-stone-800/80 border-stone-700 text-stone-300' : 'bg-stone-100 border-stone-200 text-stone-700'
+                            }`}>
                             <Hash className="w-4 h-4" />
                           </div>
                           <div>
@@ -2144,29 +2191,40 @@ export default function AdminDashboard() {
                         <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                           <button
                             onClick={() => handlePrintInvoice(o)}
-                            className={`p-1.5 rounded-lg border transition-colors ${
-                              isDark ? 'bg-stone-800 text-stone-300 border-stone-700 hover:text-gold-400' : 'bg-stone-100 text-stone-700 border-stone-200 hover:text-forest-900'
-                            }`}
+                            className={`p-1.5 rounded-lg border transition-colors ${isDark ? 'bg-stone-800 text-stone-300 border-stone-700 hover:text-gold-400' : 'bg-stone-100 text-stone-700 border-stone-200 hover:text-forest-900'
+                              }`}
                             title="Print Tax Invoice / Packing Slip"
                           >
                             <Printer className="w-3.5 h-3.5" />
                           </button>
-                          {['pending', 'processing', 'shipped', 'delivered', 'cancelled'].filter(s => s !== o.fulfillmentStatus).map(status => (
+                          {['pending', 'processing', 'shipped', 'delivered', 'cancelled'].filter(s => s !== o.fulfillmentStatus).map(status => {
+                            const transBtnColors = isDark ? {
+                              pending: 'bg-purple-950/20 text-purple-300 border-purple-800/30 hover:bg-purple-900/40',
+                              processing: 'bg-amber-950/20 text-amber-300 border-amber-800/30 hover:bg-amber-900/40',
+                              shipped: 'bg-blue-950/20 text-blue-300 border-blue-800/30 hover:bg-blue-900/40',
+                              delivered: 'bg-emerald-950/20 text-emerald-300 border-emerald-800/30 hover:bg-emerald-900/40',
+                              cancelled: 'bg-red-950/20 text-red-300 border-red-800/30 hover:bg-red-900/40'
+                            } : {
+                              pending: 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100',
+                              processing: 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100',
+                              shipped: 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100',
+                              delivered: 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100',
+                              cancelled: 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+                            };
+                            return (
                             <button
                               key={status}
                               onClick={() => handleUpdateOrderStatus(o.id, status)}
-                              className={`text-[10px] font-bold px-2 py-1 rounded-lg border transition-colors capitalize ${
-                                isDark ? 'bg-stone-800/80 text-stone-300 hover:text-white border-stone-700/60 hover:bg-stone-700' : 'bg-stone-100 text-stone-700 hover:text-stone-950 border-stone-200 hover:bg-stone-200'
-                              }`}
+                              className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all capitalize ${transBtnColors[status] || ''}`}
                             >
                               → {status}
                             </button>
-                          ))}
+                            );
+                          })}
                           <button
                             onClick={() => setSelectedOrderDetails(o)}
-                            className={`p-1.5 rounded-lg border transition-colors ${
-                              isDark ? 'bg-gold-500/10 border-gold-500/30 text-gold-400 hover:bg-gold-500/20' : 'bg-gold-50 border-gold-300 text-forest-900 hover:bg-gold-100'
-                            }`}
+                            className={`p-1.5 rounded-lg border transition-colors ${isDark ? 'bg-gold-500/10 border-gold-500/30 text-gold-400 hover:bg-gold-500/20' : 'bg-gold-50 border-gold-300 text-forest-900 hover:bg-gold-100'
+                              }`}
                             title="Drill Down: Complete Order Details & Tracking"
                           >
                             <Eye className="w-3.5 h-3.5" />
@@ -2199,11 +2257,10 @@ export default function AdminDashboard() {
                   placeholder="Search by name or email..."
                   value={userSearch}
                   onChange={(e) => setUserSearch(e.target.value)}
-                  className={`w-full rounded-xl pl-9 pr-4 py-2.5 text-xs transition-colors focus:outline-none ${
-                    isDark
+                  className={`w-full rounded-xl pl-9 pr-4 py-2.5 text-xs transition-colors focus:outline-none ${isDark
                       ? 'bg-stone-900/60 border border-stone-800 text-stone-100 placeholder:text-stone-500 focus:border-gold-500/50'
                       : 'bg-white border border-stone-300 text-stone-900 placeholder:text-stone-400 focus:border-forest-600 shadow-xs'
-                  }`}
+                    }`}
                 />
               </div>
               <div className="glass-card rounded-2xl overflow-hidden">
@@ -2234,11 +2291,10 @@ export default function AdminDashboard() {
                         </td>
                         <td className={`px-4 py-3 ${isDark ? 'text-stone-400' : 'text-stone-600 font-medium'}`}>{u.email}</td>
                         <td className="px-4 py-3 text-center">
-                          <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
-                            u.role === 'admin'
+                          <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${u.role === 'admin'
                               ? (isDark ? 'bg-gold-500/20 text-gold-400 border border-gold-500/20' : 'bg-forest-900 text-gold-300 font-bold')
                               : (isDark ? 'bg-stone-800 text-stone-400 border border-stone-700' : 'bg-stone-100 text-stone-700 border border-stone-200')
-                          }`}>
+                            }`}>
                             {u.role === 'admin' ? '👑 Admin' : '👤 Customer'}
                           </span>
                         </td>
@@ -2247,18 +2303,16 @@ export default function AdminDashboard() {
                           <div className="flex items-center justify-center gap-1.5">
                             <button
                               onClick={() => setSelectedCustomerDetails(u)}
-                              className={`p-1.5 rounded-lg border transition-colors ${
-                                isDark ? 'bg-gold-500/10 border-gold-500/30 text-gold-400 hover:bg-gold-500/20' : 'bg-gold-50 border-gold-300 text-forest-900 hover:bg-gold-100'
-                              }`}
+                              className={`p-1.5 rounded-lg border transition-colors ${isDark ? 'bg-gold-500/10 border-gold-500/30 text-gold-400 hover:bg-gold-500/20' : 'bg-gold-50 border-gold-300 text-forest-900 hover:bg-gold-100'
+                                }`}
                               title="Customer Drill-Down: LTV, Order History & Activity"
                             >
                               <Eye className="w-3.5 h-3.5" />
                             </button>
                             <button
                               onClick={() => handleToggleUserRole(u.id, u.role, u.name)}
-                              className={`text-[10px] font-bold px-2 py-1 rounded-lg border transition-colors ${
-                                isDark ? 'bg-stone-800/60 text-stone-400 hover:text-gold-400 border-stone-700/40 hover:bg-stone-800' : 'bg-stone-100 text-stone-700 hover:text-stone-950 border-stone-200 hover:bg-stone-200'
-                              }`}
+                              className={`text-[10px] font-bold px-2 py-1 rounded-lg border transition-colors ${isDark ? 'bg-stone-800/60 text-stone-400 hover:text-gold-400 border-stone-700/40 hover:bg-stone-800' : 'bg-stone-100 text-stone-700 hover:text-stone-950 border-stone-200 hover:bg-stone-200'
+                                }`}
                             >
                               {u.role === 'admin' ? 'Demote' : 'Promote'}
                             </button>
@@ -2296,9 +2350,8 @@ export default function AdminDashboard() {
                       value={newCouponCode}
                       onChange={(e) => setNewCouponCode(e.target.value.toUpperCase())}
                       placeholder="e.g. SAVE20"
-                      className={`w-full rounded-xl px-3 py-2.5 text-xs focus:outline-none ${
-                        isDark ? 'bg-stone-900/60 border border-stone-800 text-stone-100 focus:border-gold-500/50' : 'bg-white border border-stone-300 text-stone-900 focus:border-forest-600 shadow-xs'
-                      }`}
+                      className={`w-full rounded-xl px-3 py-2.5 text-xs focus:outline-none ${isDark ? 'bg-stone-900/60 border border-stone-800 text-stone-100 focus:border-gold-500/50' : 'bg-white border border-stone-300 text-stone-900 focus:border-forest-600 shadow-xs'
+                        }`}
                     />
                   </div>
                   <div>
@@ -2310,9 +2363,8 @@ export default function AdminDashboard() {
                       max="100"
                       value={newCouponDiscount}
                       onChange={(e) => setNewCouponDiscount(Number(e.target.value))}
-                      className={`w-full rounded-xl px-3 py-2.5 text-xs focus:outline-none ${
-                        isDark ? 'bg-stone-900/60 border border-stone-800 text-stone-100 focus:border-gold-500/50' : 'bg-white border border-stone-300 text-stone-900 focus:border-forest-600 shadow-xs'
-                      }`}
+                      className={`w-full rounded-xl px-3 py-2.5 text-xs focus:outline-none ${isDark ? 'bg-stone-900/60 border border-stone-800 text-stone-100 focus:border-gold-500/50' : 'bg-white border border-stone-300 text-stone-900 focus:border-forest-600 shadow-xs'
+                        }`}
                     />
                   </div>
                   <div>
@@ -2322,9 +2374,8 @@ export default function AdminDashboard() {
                       required
                       value={newCouponMinOrder}
                       onChange={(e) => setNewCouponMinOrder(Number(e.target.value))}
-                      className={`w-full rounded-xl px-3 py-2.5 text-xs focus:outline-none ${
-                        isDark ? 'bg-stone-900/60 border border-stone-800 text-stone-100 focus:border-gold-500/50' : 'bg-white border border-stone-300 text-stone-900 focus:border-forest-600 shadow-xs'
-                      }`}
+                      className={`w-full rounded-xl px-3 py-2.5 text-xs focus:outline-none ${isDark ? 'bg-stone-900/60 border border-stone-800 text-stone-100 focus:border-gold-500/50' : 'bg-white border border-stone-300 text-stone-900 focus:border-forest-600 shadow-xs'
+                        }`}
                     />
                   </div>
                 </div>
@@ -2414,9 +2465,8 @@ export default function AdminDashboard() {
                         type={field.type}
                         value={storeSettings[field.key]}
                         onChange={(e) => setStoreSettings({ ...storeSettings, [field.key]: field.type === 'number' ? Number(e.target.value) : e.target.value })}
-                        className={`w-full rounded-xl px-3 py-2.5 text-xs focus:outline-none ${
-                          isDark ? 'bg-stone-900/60 border border-stone-800 text-stone-100 focus:border-gold-500/50' : 'bg-white border border-stone-300 text-stone-900 focus:border-forest-600 shadow-xs'
-                        }`}
+                        className={`w-full rounded-xl px-3 py-2.5 text-xs focus:outline-none ${isDark ? 'bg-stone-900/60 border border-stone-800 text-stone-100 focus:border-gold-500/50' : 'bg-white border border-stone-300 text-stone-900 focus:border-forest-600 shadow-xs'
+                          }`}
                       />
                     </div>
                   ))}
@@ -2431,7 +2481,7 @@ export default function AdminDashboard() {
         </main>
 
         {/* Footer */}
-        <footer className="px-6 py-3 border-t border-stone-800/40 text-center">
+        <footer className="px-6 py-3 border-t border-stone-200 dark:border-stone-800/40 text-center">
           <p className="text-[10px] text-stone-600">
             © 2026 Veera Naturals — Admin BI Dashboard • Powered by Live Database Engine
           </p>
@@ -2442,18 +2492,16 @@ export default function AdminDashboard() {
       {selectedOrderDetails && (
         <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[60] flex items-center justify-center p-3 sm:p-4" onClick={() => setSelectedOrderDetails(null)}>
           <div
-            className={`rounded-3xl border shadow-2xl max-w-2xl w-full p-6 space-y-5 animate-fade-in-scale max-h-[90vh] overflow-y-auto ${
-              isDark ? 'bg-stone-900 border-stone-700 text-stone-100' : 'bg-white border-stone-200 text-stone-900 shadow-2xl'
-            }`}
+            className={`rounded-3xl border shadow-2xl max-w-2xl w-full p-6 space-y-5 animate-fade-in-scale max-h-[90vh] overflow-y-auto ${isDark ? 'bg-stone-900 border-stone-700 text-stone-100' : 'bg-white border-stone-200 text-stone-900 shadow-2xl'
+              }`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Top Header */}
-            <div className="flex items-start justify-between pb-4 border-b border-stone-800/40">
+            <div className="flex items-start justify-between pb-4 border-b border-stone-200 dark:border-stone-800/40">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${
-                    isDark ? 'bg-gold-500/20 text-gold-400 border border-gold-500/30' : 'bg-forest-900 text-gold-300'
-                  }`}>
+                  <span className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${isDark ? 'bg-gold-500/20 text-gold-400 border border-gold-500/30' : 'bg-forest-900 text-gold-300'
+                    }`}>
                     Order Drill-Down
                   </span>
                   <span className="text-xs text-stone-500">#{selectedOrderDetails.orderNumber || selectedOrderDetails.id?.slice(-8)}</span>
@@ -2465,9 +2513,8 @@ export default function AdminDashboard() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => handlePrintInvoice(selectedOrderDetails)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors ${
-                    isDark ? 'bg-stone-800 hover:bg-stone-700 text-stone-200 border-stone-700' : 'bg-stone-100 hover:bg-stone-200 text-stone-800 border-stone-300'
-                  }`}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors ${isDark ? 'bg-stone-800 hover:bg-stone-700 text-stone-200 border-stone-700' : 'bg-stone-100 hover:bg-stone-200 text-stone-800 border-stone-300'
+                    }`}
                   title="Print Tax Invoice"
                 >
                   <Printer className="w-3.5 h-3.5" />
@@ -2475,9 +2522,8 @@ export default function AdminDashboard() {
                 </button>
                 <button
                   onClick={() => setSelectedOrderDetails(null)}
-                  className={`p-1.5 rounded-xl border transition-colors ${
-                    isDark ? 'bg-stone-800 text-stone-400 hover:text-stone-200 border-stone-700' : 'bg-stone-100 text-stone-600 hover:text-stone-900 border-stone-200'
-                  }`}
+                  className={`p-1.5 rounded-xl border transition-colors ${isDark ? 'bg-stone-800 text-stone-400 hover:text-stone-200 border-stone-700' : 'bg-stone-100 text-stone-600 hover:text-stone-900 border-stone-200'
+                    }`}
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -2497,11 +2543,10 @@ export default function AdminDashboard() {
                   const Icon = s.icon;
                   return (
                     <div key={idx} className="flex flex-col items-center">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 transition-all ${
-                        s.active
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 transition-all ${s.active
                           ? 'bg-emerald-500 text-stone-950 font-bold shadow-md'
                           : (isDark ? 'bg-stone-800 text-stone-600 border border-stone-700' : 'bg-stone-200 text-stone-400')
-                      }`}>
+                        }`}>
                         <Icon className="w-4 h-4" />
                       </div>
                       <span className={`text-[11px] font-semibold ${s.active ? (isDark ? 'text-stone-200' : 'text-stone-900') : 'text-stone-500'}`}>{s.step}</span>
@@ -2535,15 +2580,14 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Tracking updater */}
-                <div className="pt-2 border-t border-stone-800/40 space-y-2">
+                <div className="pt-2 border-t border-stone-200 dark:border-stone-800/40 space-y-2">
                   <span className="text-[10px] font-bold uppercase text-stone-500">Shipping Carrier & Tracking</span>
                   <div className="flex gap-2">
                     <select
                       value={trackingCarrierInput}
                       onChange={(e) => setTrackingCarrierInput(e.target.value)}
-                      className={`text-[11px] rounded-xl px-2.5 py-1.5 border focus:outline-none ${
-                        isDark ? 'bg-stone-800 border-stone-700 text-stone-200' : 'bg-white border-stone-300 text-stone-800'
-                      }`}
+                      className={`text-[11px] rounded-xl px-2.5 py-1.5 border focus:outline-none ${isDark ? 'bg-stone-800 border-stone-700 text-stone-200' : 'bg-white border-stone-300 text-stone-800'
+                        }`}
                     >
                       <option>Blue Dart</option>
                       <option>Delhivery</option>
@@ -2555,9 +2599,8 @@ export default function AdminDashboard() {
                       placeholder="AWB / Tracking #"
                       value={trackingNumberInput}
                       onChange={(e) => setTrackingNumberInput(e.target.value)}
-                      className={`flex-1 text-[11px] rounded-xl px-3 py-1.5 border focus:outline-none ${
-                        isDark ? 'bg-stone-800 border-stone-700 text-stone-100 placeholder:text-stone-500' : 'bg-white border-stone-300 text-stone-900 placeholder:text-stone-400'
-                      }`}
+                      className={`flex-1 text-[11px] rounded-xl px-3 py-1.5 border focus:outline-none ${isDark ? 'bg-stone-800 border-stone-700 text-stone-100 placeholder:text-stone-500' : 'bg-white border-stone-300 text-stone-900 placeholder:text-stone-400'
+                        }`}
                     />
                     <button
                       onClick={() => handleSaveTracking(selectedOrderDetails.id)}
@@ -2580,19 +2623,19 @@ export default function AdminDashboard() {
                   <DollarSign className="w-3.5 h-3.5 text-emerald-500" /> Payment & Status Controls
                 </h4>
                 <div className="space-y-1 text-xs">
-                  <div className="flex justify-between py-1 border-b border-stone-800/30">
+                  <div className="flex justify-between py-1 border-b ${isDark ? 'border-stone-800/30' : 'border-stone-200'}">
                     <span className="text-stone-500">Payment Gateway:</span>
                     <span className="font-bold capitalize">{selectedOrderDetails.paymentMethod || 'Prepaid'}</span>
                   </div>
-                  <div className="flex justify-between py-1 border-b border-stone-800/30">
+                  <div className="flex justify-between py-1 border-b ${isDark ? 'border-stone-800/30' : 'border-stone-200'}">
                     <span className="text-stone-500">Payment Status:</span>
                     <span className="font-bold text-emerald-400 capitalize">{selectedOrderDetails.paymentStatus || 'Completed'}</span>
                   </div>
-                  <div className="flex justify-between py-1 border-b border-stone-800/30">
+                  <div className="flex justify-between py-1 border-b ${isDark ? 'border-stone-800/30' : 'border-stone-200'}">
                     <span className="text-stone-500">Subtotal:</span>
                     <span>₹{selectedOrderDetails.totalAmount}</span>
                   </div>
-                  <div className="flex justify-between py-1 border-b border-stone-800/30">
+                  <div className="flex justify-between py-1 border-b ${isDark ? 'border-stone-800/30' : 'border-stone-200'}">
                     <span className="text-stone-500">Shipping:</span>
                     <span className="text-emerald-500 font-bold">FREE</span>
                   </div>
@@ -2603,18 +2646,17 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Quick Status Updater Strip */}
-                <div className="pt-2 border-t border-stone-800/40 space-y-2">
+                <div className="pt-2 border-t border-stone-200 dark:border-stone-800/40 space-y-2">
                   <span className="text-[10px] font-bold uppercase text-stone-500">Update Live Status</span>
                   <div className="grid grid-cols-2 gap-1.5">
                     {['processing', 'shipped', 'delivered', 'cancelled'].map(st => (
                       <button
                         key={st}
                         onClick={() => handleUpdateOrderStatus(selectedOrderDetails.id, st)}
-                        className={`text-[11px] font-bold py-1.5 px-2 rounded-xl border capitalize transition-all ${
-                          selectedOrderDetails.fulfillmentStatus === st
+                        className={`text-[11px] font-bold py-1.5 px-2 rounded-xl border capitalize transition-all ${selectedOrderDetails.fulfillmentStatus === st
                             ? 'bg-gold-500 text-stone-950 border-gold-400 shadow-sm'
                             : (isDark ? 'bg-stone-800/80 hover:bg-stone-700 text-stone-300 border-stone-700' : 'bg-white hover:bg-stone-100 text-stone-700 border-stone-200')
-                        }`}
+                          }`}
                       >
                         {st}
                       </button>
@@ -2628,9 +2670,8 @@ export default function AdminDashboard() {
             {selectedOrderDetails.items && selectedOrderDetails.items.length > 0 && (
               <div className="pt-2">
                 <h4 className="text-xs font-bold uppercase text-stone-500 tracking-wider mb-2">Itemized Formulations ({selectedOrderDetails.items.length})</h4>
-                <div className={`rounded-2xl border divide-y overflow-hidden ${
-                  isDark ? 'bg-stone-800/20 border-stone-800 divide-stone-800/40' : 'bg-stone-50 border-stone-200 divide-stone-200'
-                }`}>
+                <div className={`rounded-2xl border divide-y overflow-hidden ${isDark ? 'bg-stone-800/20 border-stone-800 divide-stone-800/40' : 'bg-stone-50 border-stone-200 divide-stone-200'
+                  }`}>
                   {selectedOrderDetails.items.map((item, idx) => (
                     <div key={idx} className="flex items-center justify-between p-3 text-xs">
                       <div className="flex items-center gap-3">
@@ -2654,13 +2695,12 @@ export default function AdminDashboard() {
       {selectedProductDrillDown && (
         <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[60] flex items-center justify-center p-3 sm:p-4" onClick={() => setSelectedProductDrillDown(null)}>
           <div
-            className={`rounded-3xl border shadow-2xl max-w-xl w-full p-6 space-y-5 animate-fade-in-scale max-h-[90vh] overflow-y-auto ${
-              isDark ? 'bg-stone-900 border-stone-700 text-stone-100' : 'bg-white border-stone-200 text-stone-900 shadow-2xl'
-            }`}
+            className={`rounded-3xl border shadow-2xl max-w-xl w-full p-6 space-y-5 animate-fade-in-scale max-h-[90vh] overflow-y-auto ${isDark ? 'bg-stone-900 border-stone-700 text-stone-100' : 'bg-white border-stone-200 text-stone-900 shadow-2xl'
+              }`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-start justify-between pb-4 border-b border-stone-800/40">
+            <div className="flex items-start justify-between pb-4 border-b border-stone-200 dark:border-stone-800/40">
               <div className="flex items-center gap-3">
                 <img
                   src={selectedProductDrillDown.image || selectedProductDrillDown.images?.[0] || '/marketing/IMG-20260804-WA0013.jpg'}
@@ -2681,9 +2721,8 @@ export default function AdminDashboard() {
               </div>
               <button
                 onClick={() => setSelectedProductDrillDown(null)}
-                className={`p-1.5 rounded-xl border transition-colors ${
-                  isDark ? 'bg-stone-800 text-stone-400 hover:text-stone-200 border-stone-700' : 'bg-stone-100 text-stone-600 hover:text-stone-900 border-stone-200'
-                }`}
+                className={`p-1.5 rounded-xl border transition-colors ${isDark ? 'bg-stone-800 text-stone-400 hover:text-stone-200 border-stone-700' : 'bg-stone-100 text-stone-600 hover:text-stone-900 border-stone-200'
+                  }`}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -2736,11 +2775,10 @@ export default function AdminDashboard() {
                       }
                       setSelectedProductDrillDown(prev => ({ ...prev, stock: (prev.stock || 0) + delta }));
                     }}
-                    className={`py-2 px-3 rounded-xl font-bold text-xs border transition-all flex items-center justify-center gap-1 ${
-                      isDark
+                    className={`py-2 px-3 rounded-xl font-bold text-xs border transition-all flex items-center justify-center gap-1 ${isDark
                         ? 'bg-stone-800 hover:bg-stone-700 text-emerald-400 border-stone-700 hover:border-emerald-500/40'
                         : 'bg-white hover:bg-emerald-50 text-emerald-700 border-stone-200 hover:border-emerald-400 shadow-xs'
-                    }`}
+                      }`}
                   >
                     <Plus className="w-3.5 h-3.5" /> {delta}
                   </button>
@@ -2751,16 +2789,14 @@ export default function AdminDashboard() {
             {/* Formulation Description & Tags */}
             <div className="space-y-2 text-xs">
               <span className="font-bold uppercase text-stone-500 tracking-wider block">Ayurvedic Formulation Details</span>
-              <p className={`leading-relaxed p-3 rounded-xl border ${
-                isDark ? 'bg-stone-800/20 border-stone-800 text-stone-300' : 'bg-stone-50 border-stone-200 text-stone-700'
-              }`}>
+              <p className={`leading-relaxed p-3 rounded-xl border ${isDark ? 'bg-stone-800/20 border-stone-800 text-stone-300' : 'bg-stone-50 border-stone-200 text-stone-700'
+                }`}>
                 {selectedProductDrillDown.description || 'Handcrafted botanical formulation cold-pressed using pure heritage methods without sulfates, parabens, or synthetic fragrances.'}
               </p>
               <div className="flex flex-wrap items-center gap-1.5 pt-1">
                 {(Array.isArray(selectedProductDrillDown.tags) ? selectedProductDrillDown.tags : (selectedProductDrillDown.tags || 'Ayurvedic, Cold-Pressed, Organic').split(',')).map((tag, idx) => (
-                  <span key={idx} className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
-                    isDark ? 'bg-forest-950/40 text-forest-300 border-forest-800/40' : 'bg-forest-50 text-forest-800 border-forest-200'
-                  }`}>
+                  <span key={idx} className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${isDark ? 'bg-forest-950/40 text-forest-300 border-forest-800/40' : 'bg-forest-50 text-forest-800 border-forest-200'
+                    }`}>
                     🌿 {typeof tag === 'string' ? tag.trim() : tag}
                   </span>
                 ))}
@@ -2768,7 +2804,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* Actions */}
-            <div className="flex items-center justify-between gap-2.5 pt-3 border-t border-stone-800/40">
+            <div className="flex items-center justify-between gap-2.5 pt-3 border-t border-stone-200 dark:border-stone-800/40">
               <button
                 onClick={() => {
                   const prod = productsList.find(x => x.name?.toLowerCase() === selectedProductDrillDown.name?.toLowerCase() || x.id === (selectedProductDrillDown.id || selectedProductDrillDown.productId));
@@ -2780,9 +2816,8 @@ export default function AdminDashboard() {
                     setProductSearch(prod.name);
                   }
                 }}
-                className={`text-xs font-bold px-4 py-2 rounded-xl border transition-colors flex items-center gap-1.5 ${
-                  isDark ? 'bg-stone-800 text-gold-400 border-stone-700 hover:bg-stone-700' : 'bg-stone-100 text-forest-900 border-stone-300 hover:bg-stone-200'
-                }`}
+                className={`text-xs font-bold px-4 py-2 rounded-xl border transition-colors flex items-center gap-1.5 ${isDark ? 'bg-stone-800 text-gold-400 border-stone-700 hover:bg-stone-700' : 'bg-stone-100 text-forest-900 border-stone-300 hover:bg-stone-200'
+                  }`}
               >
                 <span>Drill Down to Catalog</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -2800,9 +2835,8 @@ export default function AdminDashboard() {
                 </button>
                 <button
                   onClick={() => setSelectedProductDrillDown(null)}
-                  className={`text-xs font-bold px-4 py-2 rounded-xl border transition-colors ${
-                    isDark ? 'bg-stone-800 text-stone-300 border-stone-700 hover:bg-stone-700' : 'bg-stone-100 text-stone-700 border-stone-200 hover:bg-stone-200'
-                  }`}
+                  className={`text-xs font-bold px-4 py-2 rounded-xl border transition-colors ${isDark ? 'bg-stone-800 text-stone-300 border-stone-700 hover:bg-stone-700' : 'bg-stone-100 text-stone-700 border-stone-200 hover:bg-stone-200'
+                    }`}
                 >
                   Close
                 </button>
@@ -2816,13 +2850,12 @@ export default function AdminDashboard() {
       {selectedCustomerDetails && (
         <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[60] flex items-center justify-center p-3 sm:p-4" onClick={() => setSelectedCustomerDetails(null)}>
           <div
-            className={`rounded-3xl border shadow-2xl max-w-xl w-full p-6 space-y-5 animate-fade-in-scale max-h-[90vh] overflow-y-auto ${
-              isDark ? 'bg-stone-900 border-stone-700 text-stone-100' : 'bg-white border-stone-200 text-stone-900 shadow-2xl'
-            }`}
+            className={`rounded-3xl border shadow-2xl max-w-xl w-full p-6 space-y-5 animate-fade-in-scale max-h-[90vh] overflow-y-auto ${isDark ? 'bg-stone-900 border-stone-700 text-stone-100' : 'bg-white border-stone-200 text-stone-900 shadow-2xl'
+              }`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-start justify-between pb-4 border-b border-stone-800/40">
+            <div className="flex items-start justify-between pb-4 border-b border-stone-200 dark:border-stone-800/40">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-gold-500 to-gold-700 flex items-center justify-center text-stone-950 font-extrabold text-lg shadow-md">
                   {selectedCustomerDetails.name?.charAt(0).toUpperCase()}
@@ -2832,9 +2865,8 @@ export default function AdminDashboard() {
                     <span className="text-[10px] font-bold uppercase tracking-wider bg-gold-500/20 text-gold-400 border border-gold-500/30 px-2 py-0.5 rounded-full">
                       Customer Profile
                     </span>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                      selectedCustomerDetails.role === 'admin' ? 'bg-purple-950/40 text-purple-400 border-purple-800/40' : 'bg-emerald-950/40 text-emerald-400 border-emerald-800/40'
-                    }`}>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${selectedCustomerDetails.role === 'admin' ? 'bg-purple-950/40 text-purple-400 border-purple-800/40' : 'bg-emerald-950/40 text-emerald-400 border-emerald-800/40'
+                      }`}>
                       {selectedCustomerDetails.role === 'admin' ? '👑 Admin' : '👤 Verified Client'}
                     </span>
                   </div>
@@ -2846,9 +2878,8 @@ export default function AdminDashboard() {
               </div>
               <button
                 onClick={() => setSelectedCustomerDetails(null)}
-                className={`p-1.5 rounded-xl border transition-colors ${
-                  isDark ? 'bg-stone-800 text-stone-400 hover:text-stone-200 border-stone-700' : 'bg-stone-100 text-stone-600 hover:text-stone-900 border-stone-200'
-                }`}
+                className={`p-1.5 rounded-xl border transition-colors ${isDark ? 'bg-stone-800 text-stone-400 hover:text-stone-200 border-stone-700' : 'bg-stone-100 text-stone-600 hover:text-stone-900 border-stone-200'
+                  }`}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -2900,9 +2931,8 @@ export default function AdminDashboard() {
                     {customerOrders.length === 0 ? (
                       <p className="text-xs text-stone-500 text-center py-6">No orders placed by this customer yet.</p>
                     ) : (
-                      <div className={`rounded-2xl border divide-y overflow-hidden max-h-48 overflow-y-auto ${
-                        isDark ? 'bg-stone-800/20 border-stone-800 divide-stone-800/40' : 'bg-stone-50 border-stone-200 divide-stone-200'
-                      }`}>
+                      <div className={`rounded-2xl border divide-y overflow-hidden max-h-48 overflow-y-auto ${isDark ? 'bg-stone-800/20 border-stone-800 divide-stone-800/40' : 'bg-stone-50 border-stone-200 divide-stone-200'
+                        }`}>
                         {customerOrders.map((ord) => (
                           <div key={ord.id} className="flex items-center justify-between p-3 text-xs">
                             <div>
@@ -2913,9 +2943,8 @@ export default function AdminDashboard() {
                               <span className={`font-bold ${isDark ? 'text-gold-400' : 'text-forest-900'}`}>₹{ord.totalAmount}</span>
                               <button
                                 onClick={() => { setSelectedCustomerDetails(null); setSelectedOrderDetails(ord); }}
-                                className={`text-[10px] font-bold px-2 py-1 rounded-lg border transition-colors ${
-                                  isDark ? 'bg-stone-800 text-stone-300 hover:text-gold-400 border-stone-700' : 'bg-white text-stone-700 border-stone-300 hover:text-forest-900 shadow-2xs'
-                                }`}
+                                className={`text-[10px] font-bold px-2 py-1 rounded-lg border transition-colors ${isDark ? 'bg-stone-800 text-stone-300 hover:text-gold-400 border-stone-700' : 'bg-white text-stone-700 border-stone-300 hover:text-forest-900 shadow-2xs'
+                                  }`}
                               >
                                 View Order
                               </button>
@@ -2930,12 +2959,11 @@ export default function AdminDashboard() {
             })()}
 
             {/* Actions */}
-            <div className="flex items-center justify-between pt-3 border-t border-stone-800/40">
+            <div className="flex items-center justify-between pt-3 border-t border-stone-200 dark:border-stone-800/40">
               <button
                 onClick={() => handleToggleUserRole(selectedCustomerDetails.id, selectedCustomerDetails.role, selectedCustomerDetails.name)}
-                className={`text-xs font-bold px-4 py-2 rounded-xl border transition-colors ${
-                  isDark ? 'bg-stone-800 text-stone-300 border-stone-700 hover:text-gold-400' : 'bg-stone-100 text-stone-700 border-stone-200 hover:bg-stone-200'
-                }`}
+                className={`text-xs font-bold px-4 py-2 rounded-xl border transition-colors ${isDark ? 'bg-stone-800 text-stone-300 border-stone-700 hover:text-gold-400' : 'bg-stone-100 text-stone-700 border-stone-200 hover:bg-stone-200'
+                  }`}
               >
                 {selectedCustomerDetails.role === 'admin' ? 'Demote to Customer' : 'Promote to Admin'}
               </button>
@@ -2947,9 +2975,8 @@ export default function AdminDashboard() {
                     setOrderSearch(selectedCustomerDetails.email || selectedCustomerDetails.name);
                     setOrderStatusFilter('all');
                   }}
-                  className={`text-xs font-bold px-4 py-2 rounded-xl border transition-colors ${
-                    isDark ? 'bg-stone-800 text-stone-300 hover:bg-stone-700 border-stone-700' : 'bg-stone-100 text-stone-700 hover:bg-stone-200 border-stone-200'
-                  }`}
+                  className={`text-xs font-bold px-4 py-2 rounded-xl border transition-colors ${isDark ? 'bg-stone-800 text-stone-300 hover:bg-stone-700 border-stone-700' : 'bg-stone-100 text-stone-700 hover:bg-stone-200 border-stone-200'
+                    }`}
                 >
                   View Orders
                 </button>
@@ -3041,9 +3068,8 @@ export default function AdminDashboard() {
           onClick={() => setShowFinancialDrillDown(false)}
         >
           <div
-            className={`relative w-full max-w-3xl rounded-3xl p-6 md:p-8 border shadow-2xl transition-all max-h-[90vh] overflow-y-auto ${
-              isDark ? 'bg-stone-900 border-stone-800 text-stone-100' : 'bg-white border-stone-200 text-stone-900'
-            }`}
+            className={`relative w-full max-w-3xl rounded-3xl p-6 md:p-8 border shadow-2xl transition-all max-h-[90vh] overflow-y-auto ${isDark ? 'bg-stone-900 border-stone-800 text-stone-100' : 'bg-white border-stone-200 text-stone-900'
+              }`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
@@ -3158,9 +3184,8 @@ export default function AdminDashboard() {
                 <button
                   type="button"
                   onClick={() => setShowFinancialDrillDown(false)}
-                  className={`flex-1 sm:flex-initial px-4 py-2.5 rounded-xl font-bold text-xs transition-colors ${
-                    isDark ? 'bg-stone-800 hover:bg-stone-700 text-stone-300' : 'bg-stone-100 hover:bg-stone-200 text-stone-700'
-                  }`}
+                  className={`flex-1 sm:flex-initial px-4 py-2.5 rounded-xl font-bold text-xs transition-colors ${isDark ? 'bg-stone-800 hover:bg-stone-700 text-stone-300' : 'bg-stone-100 hover:bg-stone-200 text-stone-700'
+                    }`}
                 >
                   Drill Up (Close)
                 </button>
