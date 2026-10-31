@@ -54,6 +54,86 @@ function getGreeting(name) {
   return `Good Evening, ${firstName}`;
 }
 
+// ============ REUSABLE PAGINATION BAR ============
+function PaginationBar({ currentPage, totalPages, totalItems, itemsPerPage, onPageChange, label = 'items', isDark = false }) {
+  if (totalItems === 0) return null;
+  const startItem = (currentPage - 1) * itemsPerPage + 1;
+  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+
+  return (
+    <div className={`flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3.5 border-t text-xs ${
+      isDark ? 'border-stone-800 text-stone-400 bg-stone-900/30' : 'border-stone-200 text-stone-600 bg-stone-50/70'
+    }`}>
+      <span className="font-medium">
+        Showing <strong className={isDark ? 'text-stone-200' : 'text-stone-900 font-bold'}>{startItem}</strong> to{' '}
+        <strong className={isDark ? 'text-stone-200' : 'text-stone-900 font-bold'}>{endItem}</strong> of{' '}
+        <strong className={isDark ? 'text-stone-200' : 'text-stone-900 font-bold'}>{totalItems}</strong> {label}
+      </span>
+
+      <div className="flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+          disabled={currentPage === 1}
+          className={`px-3 py-1.5 rounded-xl border flex items-center gap-1 font-bold text-xs transition-all ${
+            currentPage === 1
+              ? 'opacity-40 cursor-not-allowed border-stone-200 dark:border-stone-800'
+              : (isDark 
+                  ? 'bg-stone-800 hover:bg-stone-700 text-stone-200 border-stone-700' 
+                  : 'bg-white hover:bg-stone-100 text-stone-700 border-stone-300 shadow-2xs')
+          }`}
+        >
+          <ChevronLeft className="w-3.5 h-3.5" /> Previous
+        </button>
+
+        <div className="flex items-center gap-1">
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((pg) => {
+            if (totalPages > 7) {
+              if (pg !== 1 && pg !== totalPages && Math.abs(pg - currentPage) > 1) {
+                if (pg === 2 || pg === totalPages - 1) {
+                  return <span key={pg} className="px-1 text-stone-400">...</span>;
+                }
+                return null;
+              }
+            }
+            return (
+              <button
+                key={pg}
+                type="button"
+                onClick={() => onPageChange(pg)}
+                className={`min-w-[28px] h-7 px-2 rounded-xl font-bold text-xs transition-all ${
+                  currentPage === pg
+                    ? 'bg-forest-900 text-gold-300 shadow-xs ring-1 ring-gold-500/40'
+                    : (isDark 
+                        ? 'bg-stone-800/60 text-stone-400 hover:text-stone-200 hover:bg-stone-800' 
+                        : 'bg-stone-100 text-stone-600 hover:bg-stone-200')
+                }`}
+              >
+                {pg}
+              </button>
+            );
+          })}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+          disabled={currentPage === totalPages}
+          className={`px-3 py-1.5 rounded-xl border flex items-center gap-1 font-bold text-xs transition-all ${
+            currentPage === totalPages
+              ? 'opacity-40 cursor-not-allowed border-stone-200 dark:border-stone-800'
+              : (isDark 
+                  ? 'bg-stone-800 hover:bg-stone-700 text-stone-200 border-stone-700' 
+                  : 'bg-white hover:bg-stone-100 text-stone-700 border-stone-300 shadow-2xs')
+          }`}
+        >
+          Next <ChevronRight className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ============ MINI SPARKLINE COMPONENT ============
 function MiniSparkline({ data = [], color = '#C6A45B', height = 32 }) {
   if (!data.length) return null;
@@ -1982,7 +2062,7 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredProducts.map((p) => (
+                      {paginatedProducts.map((p) => (
                         <tr key={p.id} className={`border-b transition-colors ${isDark ? 'border-stone-800/40 hover:bg-stone-800/20' : 'border-stone-200/60 hover:bg-stone-50'}`}>
                           <td className="px-4 py-3">
                             <div
@@ -2046,7 +2126,16 @@ export default function AdminDashboard() {
                 {filteredProducts.length === 0 && (
                   <div className="text-center py-12 text-stone-500 text-sm">No formulations found matching your filters.</div>
                 )}
-              </div>
+              
+                <PaginationBar
+                  currentPage={productPage}
+                  totalPages={totalProductPages}
+                  totalItems={filteredProducts.length}
+                  itemsPerPage={productsPerPage}
+                  onPageChange={setProductPage}
+                  label="formulations"
+                  isDark={isDark}
+                /></div>
             </div>
           )}
 
@@ -2142,7 +2231,7 @@ export default function AdminDashboard() {
 
               {/* Orders List */}
               <div className="space-y-3">
-                {filteredOrders.map((o) => {
+                {paginatedOrders.map((o) => {
                   const statusColors = isDark ? {
                     pending: 'text-purple-400 bg-purple-950/30 border-purple-800/40',
                     processing: 'text-amber-400 bg-amber-950/30 border-amber-800/40',
@@ -2237,7 +2326,18 @@ export default function AdminDashboard() {
                 {filteredOrders.length === 0 && (
                   <div className="text-center py-12 text-stone-500 text-sm">No orders found matching your filters.</div>
                 )}
-              </div>
+              
+                <div className="glass-card rounded-2xl overflow-hidden mt-3">
+                  <PaginationBar
+                    currentPage={orderPage}
+                    totalPages={totalOrderPages}
+                    totalItems={filteredOrders.length}
+                    itemsPerPage={ordersPerPage}
+                    onPageChange={setOrderPage}
+                    label="orders"
+                    isDark={isDark}
+                  />
+                </div></div>
             </div>
           )}
 
@@ -2275,7 +2375,7 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredUsers.map(u => (
+                    {paginatedUsers.map(u => (
                       <tr key={u.id} className={`border-b transition-colors ${isDark ? 'border-stone-800/40 hover:bg-stone-800/20' : 'border-stone-200/80 hover:bg-stone-50'}`}>
                         <td className="px-4 py-3">
                           <div
@@ -2329,7 +2429,16 @@ export default function AdminDashboard() {
                   </tbody>
                 </table>
                 {filteredUsers.length === 0 && <div className="text-center py-12 text-stone-500 text-sm">No users found.</div>}
-              </div>
+              
+                <PaginationBar
+                  currentPage={userPage}
+                  totalPages={totalUserPages}
+                  totalItems={filteredUsers.length}
+                  itemsPerPage={usersPerPage}
+                  onPageChange={setUserPage}
+                  label="customers"
+                  isDark={isDark}
+                /></div>
             </div>
           )}
 
@@ -2532,29 +2641,61 @@ export default function AdminDashboard() {
 
             {/* Fulfillment Stepper Timeline */}
             <div className={`p-4 rounded-2xl border ${isDark ? 'bg-stone-800/40 border-stone-700/40' : 'bg-stone-50 border-stone-200'}`}>
-              <span className="text-[10px] font-bold uppercase text-stone-500 tracking-wider block mb-3">Fulfillment Journey</span>
-              <div className="grid grid-cols-4 gap-2 text-center text-xs">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[10px] font-bold uppercase text-stone-500 tracking-wider">Fulfillment Journey</span>
+                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full capitalize bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+                  Current Stage: {selectedOrderDetails.fulfillmentStatus}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-xs px-2 sm:px-4">
                 {[
                   { step: 'Placed', active: true, icon: CheckCircle2 },
                   { step: 'Processing', active: ['processing', 'shipped', 'delivered'].includes(selectedOrderDetails.fulfillmentStatus), icon: RefreshCw },
                   { step: 'Shipped', active: ['shipped', 'delivered'].includes(selectedOrderDetails.fulfillmentStatus), icon: Truck },
                   { step: 'Delivered', active: selectedOrderDetails.fulfillmentStatus === 'delivered', icon: Check }
-                ].map((s, idx) => {
+                ].map((s, idx, arr) => {
                   const Icon = s.icon;
+                  const isNextActive = idx < arr.length - 1 && arr[idx + 1].active;
                   return (
-                    <div key={idx} className="flex flex-col items-center">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 transition-all ${s.active
-                          ? 'bg-emerald-500 text-stone-950 font-bold shadow-md'
-                          : (isDark ? 'bg-stone-800 text-stone-600 border border-stone-700' : 'bg-stone-200 text-stone-400')
-                        }`}>
-                        <Icon className="w-4 h-4" />
+                    <React.Fragment key={idx}>
+                      <div className="flex flex-col items-center z-10 flex-shrink-0">
+                        <div className={`w-9 h-9 rounded-full flex items-center justify-center mb-1.5 transition-all ${s.active
+                            ? 'bg-emerald-500 text-stone-950 font-bold shadow-md ring-4 ring-emerald-500/20'
+                            : (isDark ? 'bg-stone-800 text-stone-600 border border-stone-700' : 'bg-stone-200 text-stone-400')
+                          }`}>
+                          <Icon className="w-4 h-4" />
+                        </div>
+                        <span className={`text-[11px] font-bold ${s.active ? (isDark ? 'text-emerald-400' : 'text-emerald-800') : 'text-stone-400'}`}>
+                          {s.step}
+                        </span>
                       </div>
-                      <span className={`text-[11px] font-semibold ${s.active ? (isDark ? 'text-stone-200' : 'text-stone-900') : 'text-stone-500'}`}>{s.step}</span>
-                    </div>
+
+                      {/* Arrow indicator between stages */}
+                      {idx < arr.length - 1 && (
+                        <div className="flex-1 flex items-center justify-center px-1 sm:px-2.5">
+                          <div className={`h-0.5 flex-1 transition-all ${
+                            isNextActive 
+                              ? 'bg-emerald-500' 
+                              : (isDark ? 'bg-stone-800' : 'bg-stone-300')
+                          }`} />
+                          <div className={`mx-1 flex items-center justify-center rounded-full p-1 transition-colors ${
+                            isNextActive 
+                              ? 'bg-emerald-500 text-stone-950 shadow-xs' 
+                              : (isDark ? 'bg-stone-800 text-stone-600' : 'bg-stone-200 text-stone-400')
+                          }`}>
+                            <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
+                          </div>
+                          <div className={`h-0.5 flex-1 transition-all ${
+                            isNextActive 
+                              ? 'bg-emerald-500' 
+                              : (isDark ? 'bg-stone-800' : 'bg-stone-300')
+                          }`} />
+                        </div>
+                      )}
+                    </React.Fragment>
                   );
                 })}
-              </div>
-            </div>
+              </div></div>
 
             {/* 2-Column Details Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2581,33 +2722,42 @@ export default function AdminDashboard() {
 
                 {/* Tracking updater */}
                 <div className="pt-2 border-t border-stone-200 dark:border-stone-800/40 space-y-2">
-                  <span className="text-[10px] font-bold uppercase text-stone-500">Shipping Carrier & Tracking</span>
-                  <div className="flex gap-2">
-                    <select
-                      value={trackingCarrierInput}
-                      onChange={(e) => setTrackingCarrierInput(e.target.value)}
-                      className={`text-[11px] rounded-xl px-2.5 py-1.5 border focus:outline-none ${isDark ? 'bg-stone-800 border-stone-700 text-stone-200' : 'bg-white border-stone-300 text-stone-800'
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block">
+                    Shipping Carrier & Tracking
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                    <div className="sm:col-span-5">
+                      <select
+                        value={trackingCarrierInput}
+                        onChange={(e) => setTrackingCarrierInput(e.target.value)}
+                        className={`w-full text-[11px] rounded-xl px-2.5 py-2 border font-medium focus:outline-none ${
+                          isDark ? 'bg-stone-800 border-stone-700 text-stone-200' : 'bg-white border-stone-300 text-stone-800 shadow-2xs'
                         }`}
-                    >
-                      <option>Blue Dart</option>
-                      <option>Delhivery</option>
-                      <option>DTDC</option>
-                      <option>India Post</option>
-                    </select>
-                    <input
-                      type="text"
-                      placeholder="AWB / Tracking #"
-                      value={trackingNumberInput}
-                      onChange={(e) => setTrackingNumberInput(e.target.value)}
-                      className={`flex-1 text-[11px] rounded-xl px-3 py-1.5 border focus:outline-none ${isDark ? 'bg-stone-800 border-stone-700 text-stone-100 placeholder:text-stone-500' : 'bg-white border-stone-300 text-stone-900 placeholder:text-stone-400'
+                      >
+                        <option>Blue Dart</option>
+                        <option>Delhivery</option>
+                        <option>DTDC</option>
+                        <option>India Post</option>
+                      </select>
+                    </div>
+                    <div className="sm:col-span-7 flex gap-1.5">
+                      <input
+                        type="text"
+                        placeholder="AWB / Tracking #"
+                        value={trackingNumberInput}
+                        onChange={(e) => setTrackingNumberInput(e.target.value)}
+                        className={`flex-1 min-w-0 text-[11px] rounded-xl px-3 py-2 border focus:outline-none font-mono ${
+                          isDark ? 'bg-stone-800 border-stone-700 text-stone-100 placeholder:text-stone-500' : 'bg-white border-stone-300 text-stone-900 placeholder:text-stone-400 shadow-2xs'
                         }`}
-                    />
-                    <button
-                      onClick={() => handleSaveTracking(selectedOrderDetails.id)}
-                      className="bg-gold-500 hover:bg-gold-600 text-stone-950 font-bold text-xs px-3 py-1.5 rounded-xl transition-all shadow-xs"
-                    >
-                      Save
-                    </button>
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleSaveTracking(selectedOrderDetails.id)}
+                        className="bg-gold-500 hover:bg-gold-600 text-stone-950 font-bold text-xs px-3.5 py-2 rounded-xl transition-all shadow-xs flex-shrink-0"
+                      >
+                        Save
+                      </button>
+                    </div>
                   </div>
                   {selectedOrderDetails.trackingNumber && (
                     <p className="text-[11px] text-emerald-400 flex items-center gap-1 font-semibold">
