@@ -25,7 +25,7 @@
       "name": "Priya Sundaram",
       "email": "customer@veeranaturals.com",
       "password": "$2a$10$roiNuYXjh8lF7XxyWuqadux/jQOFTd1yeaXFDA0TxzUEQBPWfbBEK",
-      "role": "user",
+      "role": "admin",
       "phone": "+91 98401 23456",
       "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
       "addresses": [
@@ -143,7 +143,7 @@
       "price": 349,
       "mrp": 499,
       "costPrice": 120,
-      "stock": 45,
+      "stock": 44,
       "lowStockThreshold": 10,
       "description": "Handcrafted cold-pressed hair oil infused with 18 sacred Ayurvedic botanicals including Bhringraj, Amla, Brahmi, and Rosemary. Deeply nourishes the scalp and halts hair thinning.",
       "ingredients": [
@@ -166,7 +166,7 @@
       ],
       "rating": 4.9,
       "numReviews": 148,
-      "salesCount": 382,
+      "salesCount": 383,
       "tags": [
         "Bestseller",
         "100% Organic",
@@ -378,7 +378,7 @@
       "price": 499,
       "mrp": 649,
       "costPrice": 160,
-      "stock": 28,
+      "stock": 27,
       "lowStockThreshold": 10,
       "description": "100% pure therapeutic grade Lavandula angustifolia harvested from high altitude Himalayan slopes. Promotes deep restful sleep and eases tension.",
       "ingredients": [
@@ -395,7 +395,7 @@
       ],
       "rating": 4.9,
       "numReviews": 95,
-      "salesCount": 210,
+      "salesCount": 211,
       "tags": [
         "Aromatherapy",
         "100% Pure"
@@ -509,6 +509,50 @@
   ],
   "orders": [
     {
+      "id": "ord_1793463216987",
+      "orderNumber": "VN-959234",
+      "userId": "usr_cust_001",
+      "userName": "Priya Sundaram",
+      "userEmail": "customer@veeranaturals.com",
+      "items": [
+        {
+          "productId": "prd_007",
+          "name": "Veera Pure Himalayan Lavender Essential Oil",
+          "price": 499,
+          "quantity": 1,
+          "image": "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=600&auto=format&fit=crop&q=80",
+          "category": "Essential Oils"
+        },
+        {
+          "productId": "prd_001",
+          "name": "Veera Signature Herbal Hair Oil",
+          "price": 349,
+          "quantity": 1,
+          "image": "/marketing/IMG-20260804-WA0013.jpg",
+          "category": "Hair Care"
+        }
+      ],
+      "shippingAddress": {
+        "street": "Flat 4B, Green Meadows, Indira Nagar",
+        "city": "Bengaluru",
+        "state": "Karnataka",
+        "pincode": "560038",
+        "country": "India",
+        "phone": "+91 98401 23456"
+      },
+      "subtotal": 848,
+      "discount": 0,
+      "shipping": 0,
+      "tax": 42,
+      "totalAmount": 890,
+      "paymentMethod": "razorpay",
+      "paymentStatus": "paid",
+      "fulfillmentStatus": "processing",
+      "couponCode": null,
+      "createdAt": "2026-10-31T16:13:36.987Z",
+      "updatedAt": "2026-10-31T16:13:36.987Z"
+    },
+    {
       "id": "ord_101",
       "orderNumber": "VN-842910",
       "userId": "usr_cust_001",
@@ -549,7 +593,7 @@
       "fulfillmentStatus": "delivered",
       "couponCode": "VEERA10",
       "createdAt": "2026-10-25T14:20:00.000Z",
-      "updatedAt": "2026-10-27T10:00:00.000Z"
+      "updatedAt": "2026-10-31T16:08:14.453Z"
     },
     {
       "id": "ord_102",
@@ -589,9 +633,9 @@
       "totalAmount": 1046,
       "paymentMethod": "upi",
       "paymentStatus": "paid",
-      "fulfillmentStatus": "shipped",
+      "fulfillmentStatus": "delivered",
       "createdAt": "2026-10-27T11:10:00.000Z",
-      "updatedAt": "2026-10-28T09:30:00.000Z"
+      "updatedAt": "2026-10-31T15:56:52.156Z"
     },
     {
       "id": "ord_103",
@@ -810,15 +854,18 @@
       "discountPercent": 20,
       "minOrder": 1000,
       "active": true
+    },
+    {
+      "id": "cpn_1793463049782",
+      "code": "MIDHUN0092",
+      "discountPercent": 15,
+      "minOrder": 500,
+      "active": true,
+      "createdAt": "2026-10-31T16:10:49.782Z"
     }
   ],
   "carts": {
-    "usr_cust_001": [
-      {
-        "productId": "prd_007",
-        "quantity": 1
-      }
-    ],
+    "usr_cust_001": [],
     "usr_admin_001": [
       {
         "productId": "prd_007",
@@ -836,6 +883,62 @@
     "currencySymbol": "₹"
   },
   "auditLogs": [
+    {
+      "id": "log_1793463845545_yvhs",
+      "action": "USER_ROLE_CHANGED",
+      "details": "Changed role of user \"Priya Sundaram\" (customer@veeranaturals.com) from user to admin",
+      "actor": "Veera Administrator",
+      "timestamp": "2026-10-31T16:24:05.545Z"
+    },
+    {
+      "id": "log_1793463656817_y9ry",
+      "action": "PRODUCT_UPDATED",
+      "details": "Updated product details for \"Veera Shea & Cocoa Deep Nourish Body Butter\" (SKU: VN-BD-005)",
+      "actor": "Veera Administrator",
+      "timestamp": "2026-10-31T16:20:56.817Z"
+    },
+    {
+      "id": "log_1793463049784_86n8",
+      "action": "COUPON_CREATED",
+      "details": "Created discount coupon code \"MIDHUN0092\" (15% OFF, Min: ₹500)",
+      "actor": "Veera Administrator",
+      "timestamp": "2026-10-31T16:10:49.784Z"
+    },
+    {
+      "id": "log_1793462894454_le0f",
+      "action": "ORDER_STATUS_UPDATED",
+      "details": "Order VN-842910 status changed: processing ➔ delivered (Customer: Priya Sundaram)",
+      "actor": "Veera Administrator",
+      "timestamp": "2026-10-31T16:08:14.454Z"
+    },
+    {
+      "id": "log_1793462872933_fzon",
+      "action": "ORDER_STATUS_UPDATED",
+      "details": "Order VN-842910 status changed: delivered ➔ processing (Customer: Priya Sundaram)",
+      "actor": "Veera Administrator",
+      "timestamp": "2026-10-31T16:07:52.933Z"
+    },
+    {
+      "id": "log_1793462869696_y8g3",
+      "action": "ORDER_STATUS_UPDATED",
+      "details": "Order VN-842910 status changed: processing ➔ delivered (Customer: Priya Sundaram)",
+      "actor": "Veera Administrator",
+      "timestamp": "2026-10-31T16:07:49.696Z"
+    },
+    {
+      "id": "log_1793462865702_ns51",
+      "action": "ORDER_STATUS_UPDATED",
+      "details": "Order VN-842910 status changed: delivered ➔ processing (Customer: Priya Sundaram)",
+      "actor": "Veera Administrator",
+      "timestamp": "2026-10-31T16:07:45.702Z"
+    },
+    {
+      "id": "log_1793462212157_nb2l",
+      "action": "ORDER_STATUS_UPDATED",
+      "details": "Order VN-842911 status changed: shipped ➔ delivered (Customer: Rahul Varma)",
+      "actor": "Veera Administrator",
+      "timestamp": "2026-10-31T15:56:52.157Z"
+    },
     {
       "id": "log_1793451054309_xzr7",
       "action": "SETTINGS_UPDATED",
