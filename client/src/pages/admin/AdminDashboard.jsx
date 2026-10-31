@@ -9,10 +9,10 @@ import {
   LayoutDashboard, Settings, Tag, Activity, Bell, ChevronLeft, LogOut,
   BarChart3, PieChart as PieChartIcon, Layers, Wallet, Store, Truck,
   UserCheck, Crown, Calendar, Hash, Zap, Globe, Sun, Moon, Menu,
-  ChevronsLeft, ChevronsRight, ArrowRight, ArrowLeft, TrendingDown, Box, Heart, Star, ChevronDown, User
+  ChevronsLeft, ChevronsRight, ArrowRight, ArrowLeft, TrendingDown, Box, Heart, Star, ChevronDown, User, RotateCcw
 } from 'lucide-react';
 import {
-  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip,
+  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, Brush,
   PieChart, Pie, Cell, BarChart, Bar, Legend, CartesianGrid, LineChart, Line
 } from 'recharts';
 import { useAuth } from '../../context/AuthContext';
@@ -642,6 +642,45 @@ export default function AdminDashboard() {
 
   const outOfStockCount = useMemo(() => productsList.filter(p => p.stock === 0).length, [productsList]);
   const healthyStockCount = useMemo(() => productsList.filter(p => p.stock > 20).length, [productsList]);
+
+  // ==================== REVENUE TREND SLICING SLIDER ====================
+  const fullTrendData = overviewFilteredData?.trend || [];
+  const [sliceStartIndex, setSliceStartIndex] = useState(0);
+  const [sliceEndIndex, setSliceEndIndex] = useState(Math.max(0, (fullTrendData.length || 6) - 1));
+
+  // Sync slice range when timeframe or category changes
+  useEffect(() => {
+    if (fullTrendData.length > 0) {
+      setSliceStartIndex(0);
+      setSliceEndIndex(fullTrendData.length - 1);
+    }
+  }, [fullTrendData.length, timeframe, overviewCategory]);
+
+  // Sliced trend data passed to the AreaChart
+  const displayedTrendData = useMemo(() => {
+    if (!fullTrendData.length) return [];
+    const start = Math.max(0, Math.min(sliceStartIndex, fullTrendData.length - 1));
+    const end = Math.max(start, Math.min(sliceEndIndex, fullTrendData.length - 1));
+    return fullTrendData.slice(start, end + 1);
+  }, [fullTrendData, sliceStartIndex, sliceEndIndex]);
+
+  // Dynamic window stats for the sliced interval
+  const slicedWindowStats = useMemo(() => {
+    if (!displayedTrendData.length) return { revenue: 0, profit: 0, margin: 0, peakMonth: 'N/A' };
+    const totalRev = displayedTrendData.reduce((acc, curr) => acc + (curr.revenue || 0), 0);
+    const totalProf = displayedTrendData.reduce((acc, curr) => acc + (curr.profit || 0), 0);
+    const margin = totalRev > 0 ? Math.round((totalProf / totalRev) * 100) : 0;
+    let peak = displayedTrendData[0];
+    displayedTrendData.forEach(d => {
+      if ((d.revenue || 0) > (peak.revenue || 0)) peak = d;
+    });
+    return {
+      revenue: totalRev,
+      profit: totalProf,
+      margin,
+      peakMonth: `${peak?.month || 'N/A'} (₹${(peak?.revenue || 0).toLocaleString()})`
+    };
+  }, [displayedTrendData]);
 
   // ==================== COMPUTED METRICS ====================
   const pendingOrdersCount = ordersList.filter(o => o.fulfillmentStatus === 'pending').length;
@@ -1587,7 +1626,7 @@ export default function AdminDashboard() {
                     title="Click chart to drill down into Financial & Unit Economics"
                   >
                     <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={overviewFilteredData?.trend || []}>
+                      <AreaChart data={displayedTrendData.length > 0 ? displayedTrendData : (overviewFilteredData?.trend || [])}>
                         <defs>
                           <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%" stopColor={isDark ? "#C6A45B" : "#123E30"} stopOpacity={0.8} />
@@ -1613,8 +1652,145 @@ export default function AdminDashboard() {
                         />
                         <Area type="monotone" dataKey="revenue" name="Revenue" stroke={isDark ? "#C6A45B" : "#123E30"} strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
                         <Area type="monotone" dataKey="profit" name="Profit" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorProf)" />
+                        {fullTrendData.length > 2 && (
+                          <Brush
+                            dataKey="month"
+                            height={26}
+                            stroke={isDark ? "#C6A45B" : "#123E30"}
+                            fill={isDark ? "#1c1917" : "#fdfbf7"}
+                            travellerWidth={10}
+                            startIndex={Math.min(sliceStartIndex, Math.max(0, displayedTrendData.length - 1))}
+                            endIndex={Math.min(sliceEndIndex, Math.max(0, displayedTrendData.length - 1))}
+                          />
+                        )}
                       </AreaChart>
                     </ResponsiveContainer>
+                  </div>
+
+                  {/* Slicing Slider Control Strip Under Graph */}
+                  <div className={`p-4 rounded-2xl border space-y-3 transition-colors ${
+                    isDark ? 'bg-stone-900/60 border-stone-800' : 'bg-stone-50/90 border-stone-200'
+                  }`}>
+                    {/* Slicer Header & Live Window Metrics */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                      <div className="flex items-center gap-2.5">
+                        <div className={`p-1.5 rounded-xl ${isDark ? 'bg-gold-500/20 text-gold-400' : 'bg-forest-900 text-gold-300 shadow-2xs'}`}>
+                          <Sliders className="w-3.5 h-3.5" />
+                        </div>
+                        <div>
+                          <span className="font-bold tracking-wider uppercase text-[10px] text-stone-500 block">
+                            Timeline Dynamic Slicer
+                          </span>
+                          <span className={`font-bold text-xs ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>
+                            {fullTrendData[sliceStartIndex]?.month || 'Start'} ➔ {fullTrendData[sliceEndIndex]?.month || 'End'}
+                            <span className="text-stone-400 font-normal ml-1.5">
+                              ({(sliceEndIndex - sliceStartIndex + 1)} months window)
+                            </span>
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Sliced Window Quick Metrics */}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className={`text-[11px] font-bold px-2.5 py-1 rounded-xl border ${
+                          isDark ? 'bg-stone-800/80 border-stone-700 text-stone-200' : 'bg-white border-stone-200 text-forest-950 shadow-2xs'
+                        }`}>
+                          Window Sales: <strong className={isDark ? 'text-gold-400' : 'text-forest-900 font-bold'}>₹{slicedWindowStats.revenue.toLocaleString()}</strong>
+                        </span>
+                        <span className={`text-[11px] font-bold px-2.5 py-1 rounded-xl border ${
+                          isDark ? 'bg-stone-800/80 border-stone-700 text-emerald-400' : 'bg-white border-stone-200 text-emerald-700 shadow-2xs'
+                        }`}>
+                          Margin: <strong>{slicedWindowStats.margin}%</strong>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSliceStartIndex(0);
+                            setSliceEndIndex(Math.max(0, fullTrendData.length - 1));
+                          }}
+                          className={`text-[11px] font-bold px-2.5 py-1 rounded-xl border transition-colors flex items-center gap-1.5 ${
+                            isDark ? 'hover:bg-stone-800 text-stone-400 hover:text-stone-200 border-stone-700' : 'hover:bg-stone-100 text-stone-600 border-stone-300 bg-white shadow-2xs'
+                          }`}
+                          title="Reset slice to full range"
+                        >
+                          <RotateCcw className="w-3 h-3 text-gold-500" />
+                          <span>Reset</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Dual Sliders */}
+                    <div className="space-y-2 pt-1">
+                      <div className="flex items-center gap-3">
+                        <span className="text-[10px] font-bold uppercase text-stone-400 w-12 flex-shrink-0">Slice From:</span>
+                        <input
+                          type="range"
+                          min={0}
+                          max={Math.max(0, fullTrendData.length - 1)}
+                          value={sliceStartIndex}
+                          onChange={(e) => {
+                            const val = Number(e.target.value);
+                            if (val <= sliceEndIndex) {
+                              setSliceStartIndex(val);
+                            }
+                          }}
+                          className="flex-1 accent-gold-600 cursor-pointer h-2 bg-stone-200 dark:bg-stone-700 rounded-lg"
+                        />
+                        <span className={`text-xs font-mono font-bold w-12 text-right ${isDark ? 'text-gold-400' : 'text-forest-900'}`}>
+                          {fullTrendData[sliceStartIndex]?.month || 'Start'}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <span className="text-[10px] font-bold uppercase text-stone-400 w-12 flex-shrink-0">Slice To:</span>
+                        <input
+                          type="range"
+                          min={0}
+                          max={Math.max(0, fullTrendData.length - 1)}
+                          value={sliceEndIndex}
+                          onChange={(e) => {
+                            const val = Number(e.target.value);
+                            if (val >= sliceStartIndex) {
+                              setSliceEndIndex(val);
+                            }
+                          }}
+                          className="flex-1 accent-emerald-600 cursor-pointer h-2 bg-stone-200 dark:bg-stone-700 rounded-lg"
+                        />
+                        <span className={`text-xs font-mono font-bold w-12 text-right ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>
+                          {fullTrendData[sliceEndIndex]?.month || 'End'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Quick Slice Presets */}
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 mr-1">Quick Slices:</span>
+                      {[
+                        { label: 'Full Quarter (All)', start: 0, end: Math.max(0, fullTrendData.length - 1) },
+                        { label: 'Early Trend (May - Jul)', start: 0, end: Math.min(2, Math.max(0, fullTrendData.length - 1)) },
+                        { label: 'Harvest Surge (Aug - Oct)', start: Math.max(0, fullTrendData.length - 3), end: Math.max(0, fullTrendData.length - 1) },
+                        { label: 'Peak 2 Months (Sep - Oct)', start: Math.max(0, fullTrendData.length - 2), end: Math.max(0, fullTrendData.length - 1) }
+                      ].map((preset, idx) => {
+                        const isActive = sliceStartIndex === preset.start && sliceEndIndex === preset.end;
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              setSliceStartIndex(preset.start);
+                              setSliceEndIndex(preset.end);
+                            }}
+                            className={`text-[10px] font-bold px-2.5 py-1 rounded-xl border transition-all ${
+                              isActive
+                                ? (isDark ? 'bg-gold-500 text-stone-950 border-gold-400 shadow-xs' : 'bg-forest-900 text-gold-300 border-forest-900 shadow-xs')
+                                : (isDark ? 'bg-stone-800 text-stone-400 border-stone-700 hover:text-stone-200' : 'bg-white text-stone-600 border-stone-300 hover:bg-stone-100 shadow-2xs')
+                            }`}
+                          >
+                            {preset.label}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
 
