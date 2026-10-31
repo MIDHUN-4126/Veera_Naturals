@@ -491,7 +491,7 @@ export default function ProfilePage() {
                             <button
                               type="button"
                               onClick={() => handleDeleteAddress(addrId)}
-                              className="flex items-center gap-1 text-xs font-bold text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-lg border border-red-200 transition-colors"
+                              className="flex items-center gap-1.5 text-xs font-bold text-red-700 bg-red-50 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded-xl border border-red-300 hover:border-red-600 transition-all shadow-2xs"
                             >
                               <Trash2 className="w-3 h-3" /> Delete
                             </button>

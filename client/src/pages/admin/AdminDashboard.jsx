@@ -2146,8 +2146,17 @@ export default function AdminDashboard() {
                               <button onClick={() => handleOpenEditProduct(p)} className={`p-1.5 rounded-lg border transition-colors ${isDark ? 'bg-blue-900/40 text-blue-300 border-blue-800/30 hover:bg-blue-800' : 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'}`} title="Edit Formulation">
                                 <Edit className="w-3.5 h-3.5" />
                               </button>
-                              <button onClick={() => handleDeleteProduct(p.id, p.name)} className={`p-1.5 rounded-lg border transition-colors ${isDark ? 'bg-red-900/40 text-red-300 border-red-800/30 hover:bg-red-800' : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'}`} title="Delete">
-                                <Trash2 className="w-3.5 h-3.5" />
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteProduct(p.id, p.name)}
+                                className={`p-2 rounded-xl border transition-all flex items-center justify-center ${
+                                  isDark
+                                    ? 'bg-red-950/60 text-red-400 border-red-800/60 hover:bg-red-600 hover:text-white hover:border-red-600'
+                                    : 'bg-red-50 text-red-700 border-red-300 hover:bg-red-600 hover:text-white hover:border-red-600 shadow-2xs'
+                                }`}
+                                title="Delete Formulation"
+                              >
+                                <Trash2 className="w-4 h-4 stroke-[2.2]" />
                               </button>
                             </div>
                           </td>
@@ -2450,10 +2459,16 @@ export default function AdminDashboard() {
                               {u.role === 'admin' ? 'Demote' : 'Promote'}
                             </button>
                             <button
+                              type="button"
                               onClick={() => handleDeleteUser(u.id, u.name)}
-                              className="p-1.5 rounded-lg bg-red-900/40 text-red-300 hover:bg-red-800 transition-colors"
+                              className={`p-2 rounded-xl border transition-all flex items-center justify-center ${
+                                isDark
+                                  ? 'bg-red-950/60 text-red-400 border-red-800/60 hover:bg-red-600 hover:text-white hover:border-red-600'
+                                  : 'bg-red-50 text-red-700 border-red-300 hover:bg-red-600 hover:text-white hover:border-red-600 shadow-2xs'
+                              }`}
+                              title="Delete User"
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
+                              <Trash2 className="w-4 h-4 stroke-[2.2]" />
                             </button>
                           </div>
                         </td>
@@ -2547,8 +2562,17 @@ export default function AdminDashboard() {
                         <td className={`px-4 py-3 text-right font-semibold ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>{c.discountPercent}% OFF</td>
                         <td className={`px-4 py-3 text-right ${isDark ? 'text-stone-400' : 'text-stone-600'}`}>₹{c.minOrder}</td>
                         <td className="px-4 py-3 text-center">
-                          <button onClick={() => handleDeleteCoupon(c.id, c.code)} className="p-1.5 rounded-lg bg-red-900/40 text-red-300 hover:bg-red-800 transition-colors">
-                            <Trash2 className="w-3.5 h-3.5" />
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteCoupon(c.id, c.code)}
+                            className={`p-2 rounded-xl border transition-all inline-flex items-center justify-center ${
+                              isDark
+                                ? 'bg-red-950/60 text-red-400 border-red-800/60 hover:bg-red-600 hover:text-white hover:border-red-600'
+                                : 'bg-red-50 text-red-700 border-red-300 hover:bg-red-600 hover:text-white hover:border-red-600 shadow-2xs'
+                            }`}
+                            title="Delete Coupon"
+                          >
+                            <Trash2 className="w-4 h-4 stroke-[2.2]" />
                           </button>
                         </td>
                       </tr>

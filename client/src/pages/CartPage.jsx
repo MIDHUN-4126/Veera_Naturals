@@ -153,10 +153,10 @@ export default function CartPage() {
                   {/* Remove Item */}
                   <button
                     onClick={() => removeFromCart(item.id)}
-                    className="text-stone-400 hover:text-red-600 transition-colors p-1"
+                    className="p-2 rounded-xl border border-red-200 bg-red-50 text-red-700 hover:bg-red-600 hover:text-white hover:border-red-600 transition-all shadow-2xs flex items-center justify-center"
                     title="Remove item"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4 stroke-[2.2]" />
                   </button>
                 </div>
               </div>
