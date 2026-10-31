@@ -598,6 +598,39 @@ export default function AdminDashboard() {
     u.email.toLowerCase().includes(userSearch.toLowerCase())
   ), [usersList, userSearch]);
 
+  // ==================== PAGINATION STATES & COMPUTED SLICES ====================
+  // Products Pagination (8 per page)
+  const [productPage, setProductPage] = useState(1);
+  const productsPerPage = 8;
+  const totalProductPages = Math.max(1, Math.ceil((filteredProducts?.length || 0) / productsPerPage));
+  const paginatedProducts = useMemo(() => {
+    const start = (productPage - 1) * productsPerPage;
+    return (filteredProducts || []).slice(start, start + productsPerPage);
+  }, [filteredProducts, productPage, productsPerPage]);
+
+  // Orders Pagination (6 per page)
+  const [orderPage, setOrderPage] = useState(1);
+  const ordersPerPage = 6;
+  const totalOrderPages = Math.max(1, Math.ceil((filteredOrders?.length || 0) / ordersPerPage));
+  const paginatedOrders = useMemo(() => {
+    const start = (orderPage - 1) * ordersPerPage;
+    return (filteredOrders || []).slice(start, start + ordersPerPage);
+  }, [filteredOrders, orderPage, ordersPerPage]);
+
+  // Customers CRM Pagination (6 per page)
+  const [userPage, setUserPage] = useState(1);
+  const usersPerPage = 6;
+  const totalUserPages = Math.max(1, Math.ceil((filteredUsers?.length || 0) / usersPerPage));
+  const paginatedUsers = useMemo(() => {
+    const start = (userPage - 1) * usersPerPage;
+    return (filteredUsers || []).slice(start, start + usersPerPage);
+  }, [filteredUsers, userPage, usersPerPage]);
+
+  // Reset page when filters change
+  useEffect(() => { setProductPage(1); }, [productSearch, productCategoryFilter, productStockStatus, productSortBy]);
+  useEffect(() => { setOrderPage(1); }, [orderSearch, orderStatusFilter, orderPaymentFilter, orderDateFilter]);
+  useEffect(() => { setUserPage(1); }, [userSearch]);
+
   const displayedTopProducts = useMemo(() => {
     if (!data?.topProducts) return [];
     if (overviewCategory === 'all') return data.topProducts;
