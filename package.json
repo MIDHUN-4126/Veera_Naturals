@@ -7,7 +7,9 @@
     "server": "node server/server.js",
     "client": "cd client && npm run dev",
     "build": "cd client && npm run build",
-    "seed": "node server/seed/seedData.js"
+    "seed": "node server/seed/seedData.js",
+    "deploy:hosting": "npm run build && npx -y firebase-tools deploy --only hosting",
+    "deploy:preview": "npm run build && npx -y firebase-tools hosting:channel:deploy preview"
   },
   "keywords": [
     "veera-naturals",
