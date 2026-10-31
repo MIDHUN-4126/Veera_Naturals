@@ -115,7 +115,7 @@ export default function HomePage() {
                 <div className="bg-forest-800/40 backdrop-blur-md p-4 rounded-3xl border border-gold-500/20 shadow-2xl">
                   <div className="relative rounded-2xl overflow-hidden aspect-[4/5] bg-stone-900 group">
                     <img
-                      src="/marketing/IMG-20260804-WA0013.jpg"
+                      src="/marketing/hero-signature-hair-oil.jpg"
                       alt="Veera Naturals Botanical Formulation"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                       onError={(e) => {

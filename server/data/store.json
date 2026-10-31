@@ -121,7 +121,7 @@
       "volume": "100 ml",
       "images": [
         "/products/veera-kashmiri-walnut-glow-scrub.png",
-        "/marketing/IMG-20260804-WA0013.jpg"
+        "/products/image9.png"
       ],
       "rating": 5,
       "numReviews": 0,
@@ -164,8 +164,7 @@
       "volume": "100 ml",
       "images": [
         "/products/veera-signature-herbal-hair-oil.png",
-        "/marketing/IMG-20260804-WA0013.jpg",
-        "https://images.unsplash.com/photo-1608248597359-005696120366?w=600&auto=format&fit=crop&q=80"
+        "/products/image1.png"
       ],
       "rating": 4.9,
       "numReviews": 148,
@@ -208,8 +207,7 @@
       "volume": "30 ml",
       "images": [
         "/products/veera-golden-kumkumadi-glow-serum.png",
-        "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1608248597359-005696120366?w=600&auto=format&fit=crop&q=80"
+        "/products/image3.png"
       ],
       "rating": 4.8,
       "numReviews": 96,
@@ -251,7 +249,7 @@
       "volume": "85 g",
       "images": [
         "/products/veera-wild-hibiscus-shikakai-shampoo-bar.png",
-        "https://images.unsplash.com/photo-1607006314144-a698947b1981?w=600&auto=format&fit=crop&q=80"
+        "/products/image5.png"
       ],
       "rating": 4.7,
       "numReviews": 74,
@@ -288,7 +286,7 @@
       "volume": "200 ml",
       "images": [
         "/products/veera-pure-steam-distilled-rose-water.png",
-        "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=600&auto=format&fit=crop&q=80"
+        "/products/image2.png"
       ],
       "rating": 4.9,
       "numReviews": 112,
@@ -329,7 +327,7 @@
       "volume": "150 g",
       "images": [
         "/products/veera-shea-cocoa-deep-nourish-body-butter.png",
-        "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600&auto=format&fit=crop&q=80"
+        "/products/image6.png"
       ],
       "rating": 4.8,
       "numReviews": 83,
@@ -369,7 +367,7 @@
       "volume": "120 g",
       "images": [
         "/products/veera-arabica-espresso-coconut-exfoliating-scrub.png",
-        "https://images.unsplash.com/photo-1567928815104-b637d457635c?w=600&auto=format&fit=crop&q=80"
+        "/products/image6.png"
       ],
       "rating": 4.7,
       "numReviews": 61,
@@ -406,7 +404,7 @@
       "volume": "15 ml",
       "images": [
         "/products/veera-pure-himalayan-lavender-essential-oil.png",
-        "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=600&auto=format&fit=crop&q=80"
+        "/products/image4.png"
       ],
       "rating": 4.9,
       "numReviews": 95,
@@ -443,7 +441,7 @@
       "volume": "15 ml",
       "images": [
         "/products/veera-sweet-orange-mood-booster-essential-oil.png",
-        "https://images.unsplash.com/photo-1617897903246-719242758050?w=600&auto=format&fit=crop&q=80"
+        "/products/image8.png"
       ],
       "rating": 4.8,
       "numReviews": 44,
@@ -483,7 +481,7 @@
       "volume": "100 ml",
       "images": [
         "/products/veera-neem-tea-tree-purifying-face-cleanser.png",
-        "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=600&auto=format&fit=crop&q=80"
+        "/products/image7.png"
       ],
       "rating": 4.6,
       "numReviews": 53,
@@ -540,7 +538,7 @@
           "name": "Veera Pure Himalayan Lavender Essential Oil",
           "price": 499,
           "quantity": 1,
-          "image": "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=600&auto=format&fit=crop&q=80",
+          "image": "/products/veera-pure-himalayan-lavender-essential-oil.png",
           "category": "Essential Oils"
         },
         {
@@ -548,7 +546,7 @@
           "name": "Veera Signature Herbal Hair Oil",
           "price": 349,
           "quantity": 1,
-          "image": "/marketing/IMG-20260804-WA0013.jpg",
+          "image": "/products/veera-signature-herbal-hair-oil.png",
           "category": "Hair Care"
         }
       ],
@@ -584,7 +582,7 @@
           "name": "Veera Signature Herbal Hair Oil",
           "price": 349,
           "quantity": 2,
-          "image": "/marketing/IMG-20260804-WA0013.jpg",
+          "image": "/products/veera-signature-herbal-hair-oil.png",
           "category": "Hair Care"
         },
         {
@@ -592,7 +590,7 @@
           "name": "Veera Golden Kumkumadi Glow Serum",
           "price": 699,
           "quantity": 1,
-          "image": "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600&auto=format&fit=crop&q=80",
+          "image": "/products/veera-golden-kumkumadi-glow-serum.png",
           "category": "Skin Care"
         }
       ],
@@ -627,7 +625,7 @@
           "name": "Veera Wild Hibiscus & Shikakai Shampoo Bar",
           "price": 249,
           "quantity": 2,
-          "image": "https://images.unsplash.com/photo-1607006314144-a698947b1981?w=600&auto=format&fit=crop&q=80",
+          "image": "/products/veera-wild-hibiscus-shikakai-shampoo-bar.png",
           "category": "Hair Care"
         },
         {
@@ -635,7 +633,7 @@
           "name": "Veera Pure Himalayan Lavender Essential Oil",
           "price": 499,
           "quantity": 1,
-          "image": "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=600&auto=format&fit=crop&q=80",
+          "image": "/products/veera-pure-himalayan-lavender-essential-oil.png",
           "category": "Essential Oils"
         }
       ],
@@ -669,7 +667,7 @@
           "name": "Veera Pure Steam-Distilled Rose Water",
           "price": 299,
           "quantity": 1,
-          "image": "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=600&auto=format&fit=crop&q=80",
+          "image": "/products/veera-pure-steam-distilled-rose-water.png",
           "category": "Skin Care"
         },
         {
@@ -677,7 +675,7 @@
           "name": "Veera Shea & Cocoa Deep Nourish Body Butter",
           "price": 449,
           "quantity": 1,
-          "image": "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600&auto=format&fit=crop&q=80",
+          "image": "/products/veera-shea-cocoa-deep-nourish-body-butter.png",
           "category": "Body Care"
         }
       ],
@@ -711,7 +709,7 @@
           "name": "Veera Signature Herbal Hair Oil",
           "price": 349,
           "quantity": 3,
-          "image": "/marketing/IMG-20260804-WA0013.jpg",
+          "image": "/products/veera-signature-herbal-hair-oil.png",
           "category": "Hair Care"
         }
       ],
@@ -746,7 +744,8 @@
           "name": "Veera Golden Kumkumadi Glow Serum",
           "price": 699,
           "quantity": 2,
-          "category": "Skin Care"
+          "category": "Skin Care",
+          "image": "/products/veera-golden-kumkumadi-glow-serum.png"
         }
       ],
       "subtotal": 1398,
@@ -771,7 +770,8 @@
           "name": "Veera Signature Herbal Hair Oil",
           "price": 349,
           "quantity": 4,
-          "category": "Hair Care"
+          "category": "Hair Care",
+          "image": "/products/veera-signature-herbal-hair-oil.png"
         }
       ],
       "subtotal": 1396,
@@ -796,7 +796,8 @@
           "name": "Veera Pure Himalayan Lavender Essential Oil",
           "price": 499,
           "quantity": 3,
-          "category": "Essential Oils"
+          "category": "Essential Oils",
+          "image": "/products/veera-pure-himalayan-lavender-essential-oil.png"
         }
       ],
       "subtotal": 1497,
@@ -821,7 +822,8 @@
           "name": "Veera Shea & Cocoa Deep Nourish Body Butter",
           "price": 449,
           "quantity": 2,
-          "category": "Body Care"
+          "category": "Body Care",
+          "image": "/products/veera-shea-cocoa-deep-nourish-body-butter.png"
         }
       ],
       "subtotal": 898,
@@ -846,7 +848,8 @@
           "name": "Veera Pure Steam-Distilled Rose Water",
           "price": 299,
           "quantity": 3,
-          "category": "Skin Care"
+          "category": "Skin Care",
+          "image": "/products/veera-pure-steam-distilled-rose-water.png"
         }
       ],
       "subtotal": 897,

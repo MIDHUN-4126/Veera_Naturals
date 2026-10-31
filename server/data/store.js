@@ -34,7 +34,6 @@ const getInitialState = () => ({
 let cache = null;
 
 const loadStore = () => {
-  if (cache) return cache;
   try {
     if (fs.existsSync(STORE_PATH)) {
       const data = fs.readFileSync(STORE_PATH, 'utf-8');
