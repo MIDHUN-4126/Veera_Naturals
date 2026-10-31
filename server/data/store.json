@@ -25,7 +25,7 @@
       "name": "Priya Sundaram",
       "email": "customer@veeranaturals.com",
       "password": "$2a$10$roiNuYXjh8lF7XxyWuqadux/jQOFTd1yeaXFDA0TxzUEQBPWfbBEK",
-      "role": "admin",
+      "role": "user",
       "phone": "+91 98401 23456",
       "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
       "addresses": [
@@ -120,6 +120,7 @@
       ],
       "volume": "100 ml",
       "images": [
+        "/products/veera-kashmiri-walnut-glow-scrub.png",
         "/marketing/IMG-20260804-WA0013.jpg"
       ],
       "rating": 5,
@@ -131,7 +132,8 @@
         "handcrafted"
       ],
       "isActive": true,
-      "createdAt": "2026-10-29T15:23:56.180Z"
+      "createdAt": "2026-10-29T15:23:56.180Z",
+      "image": "/products/veera-kashmiri-walnut-glow-scrub.png"
     },
     {
       "id": "prd_001",
@@ -161,6 +163,7 @@
       ],
       "volume": "100 ml",
       "images": [
+        "/products/veera-signature-herbal-hair-oil.png",
         "/marketing/IMG-20260804-WA0013.jpg",
         "https://images.unsplash.com/photo-1608248597359-005696120366?w=600&auto=format&fit=crop&q=80"
       ],
@@ -173,7 +176,8 @@
         "Cold-Pressed"
       ],
       "isActive": true,
-      "createdAt": "2026-01-15T00:00:00.000Z"
+      "createdAt": "2026-01-15T00:00:00.000Z",
+      "image": "/products/veera-signature-herbal-hair-oil.png"
     },
     {
       "id": "prd_002",
@@ -203,6 +207,7 @@
       ],
       "volume": "30 ml",
       "images": [
+        "/products/veera-golden-kumkumadi-glow-serum.png",
         "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600&auto=format&fit=crop&q=80",
         "https://images.unsplash.com/photo-1608248597359-005696120366?w=600&auto=format&fit=crop&q=80"
       ],
@@ -215,7 +220,8 @@
         "Cruelty-Free"
       ],
       "isActive": true,
-      "createdAt": "2026-02-01T00:00:00.000Z"
+      "createdAt": "2026-02-01T00:00:00.000Z",
+      "image": "/products/veera-golden-kumkumadi-glow-serum.png"
     },
     {
       "id": "prd_003",
@@ -244,6 +250,7 @@
       ],
       "volume": "85 g",
       "images": [
+        "/products/veera-wild-hibiscus-shikakai-shampoo-bar.png",
         "https://images.unsplash.com/photo-1607006314144-a698947b1981?w=600&auto=format&fit=crop&q=80"
       ],
       "rating": 4.7,
@@ -254,7 +261,8 @@
         "Sulphate Free"
       ],
       "isActive": true,
-      "createdAt": "2026-02-15T00:00:00.000Z"
+      "createdAt": "2026-02-15T00:00:00.000Z",
+      "image": "/products/veera-wild-hibiscus-shikakai-shampoo-bar.png"
     },
     {
       "id": "prd_004",
@@ -279,6 +287,7 @@
       ],
       "volume": "200 ml",
       "images": [
+        "/products/veera-pure-steam-distilled-rose-water.png",
         "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=600&auto=format&fit=crop&q=80"
       ],
       "rating": 4.9,
@@ -289,7 +298,8 @@
         "Pure Hydrosol"
       ],
       "isActive": true,
-      "createdAt": "2026-02-20T00:00:00.000Z"
+      "createdAt": "2026-02-20T00:00:00.000Z",
+      "image": "/products/veera-pure-steam-distilled-rose-water.png"
     },
     {
       "id": "prd_005",
@@ -318,6 +328,7 @@
       ],
       "volume": "150 g",
       "images": [
+        "/products/veera-shea-cocoa-deep-nourish-body-butter.png",
         "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600&auto=format&fit=crop&q=80"
       ],
       "rating": 4.8,
@@ -328,7 +339,8 @@
         "Deep Nourish"
       ],
       "isActive": true,
-      "createdAt": "2026-03-01T00:00:00.000Z"
+      "createdAt": "2026-03-01T00:00:00.000Z",
+      "image": "/products/veera-shea-cocoa-deep-nourish-body-butter.png"
     },
     {
       "id": "prd_006",
@@ -340,7 +352,7 @@
       "price": 379,
       "mrp": 499,
       "costPrice": 110,
-      "stock": 8,
+      "stock": 18,
       "lowStockThreshold": 10,
       "description": "Freshly roasted Coorg Arabica coffee grounds blended with raw brown sugar and organic cold-pressed virgin coconut oil for smooth, cellulite-resistant skin.",
       "ingredients": [
@@ -356,6 +368,7 @@
       ],
       "volume": "120 g",
       "images": [
+        "/products/veera-arabica-espresso-coconut-exfoliating-scrub.png",
         "https://images.unsplash.com/photo-1567928815104-b637d457635c?w=600&auto=format&fit=crop&q=80"
       ],
       "rating": 4.7,
@@ -366,7 +379,8 @@
         "Organic Coffee"
       ],
       "isActive": true,
-      "createdAt": "2026-03-10T00:00:00.000Z"
+      "createdAt": "2026-03-10T00:00:00.000Z",
+      "image": "/products/veera-arabica-espresso-coconut-exfoliating-scrub.png"
     },
     {
       "id": "prd_007",
@@ -391,6 +405,7 @@
       ],
       "volume": "15 ml",
       "images": [
+        "/products/veera-pure-himalayan-lavender-essential-oil.png",
         "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=600&auto=format&fit=crop&q=80"
       ],
       "rating": 4.9,
@@ -401,7 +416,8 @@
         "100% Pure"
       ],
       "isActive": true,
-      "createdAt": "2026-03-20T00:00:00.000Z"
+      "createdAt": "2026-03-20T00:00:00.000Z",
+      "image": "/products/veera-pure-himalayan-lavender-essential-oil.png"
     },
     {
       "id": "prd_008",
@@ -426,6 +442,7 @@
       ],
       "volume": "15 ml",
       "images": [
+        "/products/veera-sweet-orange-mood-booster-essential-oil.png",
         "https://images.unsplash.com/photo-1617897903246-719242758050?w=600&auto=format&fit=crop&q=80"
       ],
       "rating": 4.8,
@@ -436,7 +453,8 @@
         "Cold-Pressed"
       ],
       "isActive": true,
-      "createdAt": "2026-04-05T00:00:00.000Z"
+      "createdAt": "2026-04-05T00:00:00.000Z",
+      "image": "/products/veera-sweet-orange-mood-booster-essential-oil.png"
     },
     {
       "id": "prd_009",
@@ -448,7 +466,7 @@
       "price": 279,
       "mrp": 349,
       "costPrice": 85,
-      "stock": 5,
+      "stock": 15,
       "lowStockThreshold": 10,
       "description": "Gentle clarifying botanical wash with freshly pressed neem leaves, Australian tea tree oil, and pure aloe vera gel. Clear blemishes without stripping moisture.",
       "ingredients": [
@@ -464,6 +482,7 @@
       ],
       "volume": "100 ml",
       "images": [
+        "/products/veera-neem-tea-tree-purifying-face-cleanser.png",
         "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=600&auto=format&fit=crop&q=80"
       ],
       "rating": 4.6,
@@ -474,7 +493,8 @@
         "Low Stock"
       ],
       "isActive": true,
-      "createdAt": "2026-04-12T00:00:00.000Z"
+      "createdAt": "2026-04-12T00:00:00.000Z",
+      "image": "/products/veera-neem-tea-tree-purifying-face-cleanser.png"
     }
   ],
   "categories": [
@@ -590,10 +610,10 @@
       "totalAmount": 1320,
       "paymentMethod": "razorpay",
       "paymentStatus": "paid",
-      "fulfillmentStatus": "delivered",
+      "fulfillmentStatus": "shipped",
       "couponCode": "VEERA10",
       "createdAt": "2026-10-25T14:20:00.000Z",
-      "updatedAt": "2026-10-31T16:08:14.453Z"
+      "updatedAt": "2026-10-31T16:30:39.081Z"
     },
     {
       "id": "ord_102",
@@ -883,6 +903,34 @@
     "currencySymbol": "₹"
   },
   "auditLogs": [
+    {
+      "id": "log_1793464298359_fros",
+      "action": "STOCK_ADJUSTED",
+      "details": "Inventory for \"Veera Neem & Tea Tree Purifying Face Cleanser\" adjusted: 5 ➔ 15 units (Dashboard Quick Restock)",
+      "actor": "Veera Administrator",
+      "timestamp": "2026-10-31T16:31:38.359Z"
+    },
+    {
+      "id": "log_1793464296041_qcb6",
+      "action": "STOCK_ADJUSTED",
+      "details": "Inventory for \"Veera Arabica Espresso & Coconut Exfoliating Scrub\" adjusted: 8 ➔ 18 units (Dashboard Quick Restock)",
+      "actor": "Veera Administrator",
+      "timestamp": "2026-10-31T16:31:36.041Z"
+    },
+    {
+      "id": "log_1793464239082_ghgv",
+      "action": "ORDER_STATUS_UPDATED",
+      "details": "Order VN-842910 status changed: delivered ➔ shipped (Customer: Priya Sundaram)",
+      "actor": "Veera Administrator",
+      "timestamp": "2026-10-31T16:30:39.082Z"
+    },
+    {
+      "id": "log_1793464001479_l6at",
+      "action": "USER_ROLE_CHANGED",
+      "details": "Changed role of user \"Priya Sundaram\" (customer@veeranaturals.com) from admin to user",
+      "actor": "Veera Administrator",
+      "timestamp": "2026-10-31T16:26:41.479Z"
+    },
     {
       "id": "log_1793463845545_yvhs",
       "action": "USER_ROLE_CHANGED",

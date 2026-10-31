@@ -2269,7 +2269,7 @@ export default function AdminDashboard() {
                               className="flex items-center gap-3 cursor-pointer group"
                               title="Click to drill down into product analytics"
                             >
-                              <img src={p.image || '/marketing/IMG-20260804-WA0013.jpg'} alt="" className="w-9 h-9 rounded-lg object-cover bg-stone-800 border border-stone-700/40 group-hover:scale-105 transition-transform" />
+                              <img src={p.image || p.images?.[0] || '/marketing/IMG-20260804-WA0013.jpg'} alt="" className="w-9 h-9 rounded-lg object-cover bg-stone-800 border border-stone-700/40 group-hover:scale-105 transition-transform" />
                               <div>
                                 <p className={`font-bold line-clamp-1 group-hover:text-gold-500 transition-colors ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>{p.name}</p>
                                 <p className="text-[10px] text-stone-500">{p.sku || 'N/A'} • <span className={isDark ? 'text-gold-500' : 'text-forest-700'} style={{fontWeight: 600}}>Inspect</span></p>

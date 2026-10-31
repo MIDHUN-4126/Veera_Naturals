@@ -29,6 +29,8 @@ if (process.env.NODE_ENV !== 'production') {
 
 // Serve uploaded or marketing static files
 app.use('/marketing', express.static(path.join(__dirname, '../client/public/marketing')));
+app.use('/products', express.static(path.join(__dirname, '../client/public/products')));
+app.use('/images', express.static(path.join(__dirname, '../client/public/images')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Health check & DB Status
