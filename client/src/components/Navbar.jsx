@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ShoppingBag, User, LogOut, LayoutDashboard, Search, Menu, X, Sparkles, Heart, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -12,14 +12,36 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchInputRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Focus input when search expands
+  useEffect(() => {
+    if (searchOpen && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [searchOpen]);
+
+  // Close search on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setSearchOpen(false);
+        setSearchQuery('');
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
       setSearchQuery('');
+      setSearchOpen(false);
       setMobileMenuOpen(false);
     }
   };
@@ -42,52 +64,41 @@ export default function Navbar() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
-          
+        <div className="flex items-center justify-between h-20 gap-4">
+
           {/* Brand Logo */}
-          <Link to="/" className="flex items-center gap-3.5 group py-1">
+          <Link to="/" className="flex items-center gap-3 group py-1 shrink-0">
             <div className="relative flex items-center justify-center">
-              <div className="absolute inset-0 bg-gold-500/20 rounded-full blur-md group-hover:bg-gold-500/35 transition-all"></div>
-              <img 
-                src="/images/logo-emblem.png" 
-                alt="Veera Naturals" 
-                className="h-11 w-auto object-contain relative z-10 drop-shadow-md group-hover:scale-105 transition-transform"
-                onError={(e) => {
-                  e.target.src = '/marketing/image3.png';
-                }}
-              />
+              <div className="w-14 h-14 rounded-2xl bg-white shadow-md flex items-center justify-center p-1.5 border border-gold-400/50 group-hover:scale-105 transition-transform">
+                <img
+                  src="/images/logo-emblem.png"
+                  alt="Veera Naturals"
+                  className="h-full w-full object-contain"
+                  onError={(e) => {
+                    e.target.src = '/images/logo-white-card.jpg';
+                  }}
+                />
+              </div>
             </div>
-            <div className="flex flex-col">
-              <span className="font-serif text-2xl font-bold tracking-tight text-gold-400 group-hover:text-gold-200 transition-colors leading-tight">
+            <div className="flex flex-col leading-none">
+              <span className="font-serif text-xl font-bold tracking-tight text-gold-400 group-hover:text-gold-200 transition-colors whitespace-nowrap">
                 Veera Naturals
               </span>
-              <span className="text-[9px] tracking-[0.28em] text-ivory-200 uppercase font-sans font-semibold">
+              <span className="text-[9px] tracking-[0.2em] text-ivory-200 uppercase font-sans font-semibold whitespace-nowrap mt-0.5">
                 Pure Botanical Wellness
               </span>
             </div>
           </Link>
 
-          {/* Desktop Search */}
-          <form onSubmit={handleSearch} className="hidden lg:flex items-center flex-1 max-w-md mx-8 relative">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search herbal hair oil, kumkumadi, rose water..."
-              className="w-full bg-forest-950/70 text-ivory-100 placeholder-stone-400 text-sm rounded-full pl-11 pr-4 py-2.5 border border-forest-700 focus:border-gold-500 focus:outline-none focus:ring-1 focus:ring-gold-500 transition-all"
-            />
-            <Search className="w-4 h-4 text-gold-500 absolute left-4 pointer-events-none" />
-          </form>
-
-          {/* Navigation Links (Desktop) */}
-          <nav className="hidden md:flex items-center gap-6">
+          {/* Desktop Navigation Links */}
+          <nav className="hidden md:flex items-center gap-5 flex-1 justify-center">
             {navLinks.map((link) => {
               const isActive = location.pathname + location.search === link.path;
               return (
                 <Link
                   key={link.name}
                   to={link.path}
-                  className={`text-sm font-medium transition-colors hover:text-gold-400 relative py-1 ${
+                  className={`text-sm font-medium transition-colors hover:text-gold-400 relative py-1 whitespace-nowrap ${
                     isActive ? 'text-gold-400 font-semibold' : 'text-ivory-200'
                   }`}
                 >
@@ -101,8 +112,36 @@ export default function Navbar() {
           </nav>
 
           {/* Action Icons */}
-          <div className="flex items-center gap-4">
-            
+          <div className="flex items-center gap-3 shrink-0">
+
+            {/* Search Icon + Expandable Input */}
+            <div className="hidden lg:flex items-center relative">
+              {/* Expanding search container */}
+              <div className={`flex items-center overflow-hidden transition-all duration-300 ease-in-out ${searchOpen ? 'w-60 border border-forest-700 rounded-full bg-forest-950/70 focus-within:border-gold-500 focus-within:ring-1 focus-within:ring-gold-500' : 'w-0'}`}>
+                <form onSubmit={handleSearch} className="flex items-center w-full">
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search botanical remedies..."
+                    className="w-full bg-transparent text-ivory-100 placeholder-stone-400 text-sm pl-4 pr-2 py-2 focus:outline-none"
+                  />
+                </form>
+              </div>
+              {/* Search Icon Button */}
+              <button
+                onClick={() => {
+                  setSearchOpen(!searchOpen);
+                  if (searchOpen) setSearchQuery('');
+                }}
+                className="p-2 text-ivory-100 hover:text-gold-400 rounded-full hover:bg-forest-800/80 transition-all flex items-center justify-center"
+                title="Search"
+              >
+                {searchOpen ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
+              </button>
+            </div>
+
             {/* Admin BI Dashboard Quick Button */}
             {isAdmin && (
               <Link
@@ -242,14 +281,15 @@ export default function Navbar() {
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
         <div className="md:hidden bg-forest-950 border-t border-forest-800 px-4 pt-3 pb-6 space-y-3">
-          <form onSubmit={handleSearch} className="mb-4">
+          <form onSubmit={handleSearch} className="mb-4 relative">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search botanical remedies..."
-              className="w-full bg-forest-900 text-ivory-100 placeholder-stone-400 text-sm rounded-lg px-4 py-2 border border-forest-700"
+              className="w-full bg-forest-900 text-ivory-100 placeholder-stone-400 text-sm rounded-lg pl-10 pr-4 py-2 border border-forest-700"
             />
+            <Search className="w-4 h-4 text-gold-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           </form>
 
           {navLinks.map((link) => (

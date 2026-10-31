@@ -113,16 +113,16 @@ export default function HomePage() {
               <div className="relative w-full max-w-md">
                 {/* Main Product Card Visual */}
                 <div className="bg-forest-800/40 backdrop-blur-md p-4 rounded-3xl border border-gold-500/20 shadow-2xl">
-                  <div className="relative rounded-2xl overflow-hidden aspect-[4/5] bg-stone-900 group">
+                  <div className="relative rounded-2xl overflow-hidden aspect-[4/5] bg-white group border border-gold-500/30 shadow-inner">
                     <img
-                      src="/marketing/hero-signature-hair-oil.jpg"
-                      alt="Veera Naturals Botanical Formulation"
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                      src="/images/logo-white-card.jpg"
+                      alt="Veera Naturals Pure Botanical Wellness"
+                      className="w-full h-full object-contain p-6 group-hover:scale-105 transition-transform duration-700 bg-white"
                       onError={(e) => {
-                        e.target.src = 'https://images.unsplash.com/photo-1608248597359-005696120366?w=800&auto=format&fit=crop&q=80';
+                        e.target.src = '/marketing/IMG-20260804-WA0013.jpg';
                       }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-forest-950 via-transparent to-transparent opacity-80" />
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-forest-950 via-forest-950/90 to-transparent pt-16 pb-4 px-4 text-white">
                     
                     <div className="absolute bottom-4 left-4 right-4 text-white">
                       <span className="bg-gold-500 text-forest-950 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full">
@@ -143,6 +143,7 @@ export default function HomePage() {
                           Discover
                         </Link>
                       </div>
+                    </div>
                     </div>
                   </div>
                 </div>
@@ -431,22 +432,20 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <img
-              src="/marketing/1785836303830.png"
-              alt="Veera Naturals Herb Processing"
-              className="rounded-2xl shadow-xl object-cover h-64 w-full border border-forest-700"
-              onError={(e) => {
-                e.target.src = 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=600&auto=format&fit=crop&q=80';
-              }}
-            />
-            <img
-              src="/marketing/1785833861474.png"
-              alt="Veera Naturals Botanicals"
-              className="rounded-2xl shadow-xl object-cover h-64 w-full mt-8 border border-forest-700"
-              onError={(e) => {
-                e.target.src = 'https://images.unsplash.com/photo-1512290900672-1f486d3e75f7?w=600&auto=format&fit=crop&q=80';
-              }}
-            />
+            <div className="rounded-2xl shadow-xl overflow-hidden h-64 w-full border border-forest-700 bg-white flex items-center justify-center p-4">
+              <img
+                src="/images/logo-white-card.jpg"
+                alt="Veera Naturals Pure Botanical Wellness"
+                className="max-h-full max-w-full object-contain hover:scale-105 transition-transform duration-500"
+              />
+            </div>
+            <div className="rounded-2xl shadow-xl overflow-hidden h-64 w-full mt-8 border border-forest-700 bg-forest-950 flex items-center justify-center">
+              <img
+                src="/marketing/hair-campaign-banner.jpg"
+                alt="Veera Naturals Scalp-First Nutrition"
+                className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+              />
+            </div>
           </div>
         </div>
       </section>

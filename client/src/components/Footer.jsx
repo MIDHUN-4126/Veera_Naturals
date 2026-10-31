@@ -61,7 +61,7 @@ export default function Footer() {
         {/* Brand Column */}
         <div className="md:col-span-2 space-y-4">
           <div className="flex items-center gap-3">
-            <img src="/images/logo-emblem.png" alt="Veera Naturals" className="h-10 w-auto object-contain filter drop-shadow" onError={(e) => { e.target.src = '/marketing/image3.png'; }} />
+            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center p-1 shadow-md border border-gold-400/40 flex-shrink-0"><img src="/images/logo-emblem.png" alt="Veera Naturals" className="h-full w-full object-contain" onError={(e) => { e.target.src = '/images/logo-white-card.jpg'; }} /></div>
             <div className="flex flex-col">
               <span className="font-serif text-2xl font-bold text-gold-400">Veera Naturals</span>
               <span className="text-[9px] tracking-[0.25em] text-ivory-300 uppercase font-sans font-semibold">Pure Botanical Wellness</span>
