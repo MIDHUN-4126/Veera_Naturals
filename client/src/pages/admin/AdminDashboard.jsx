@@ -456,7 +456,7 @@ export default function AdminDashboard() {
       
       let matchesStock = true;
       if (productStockStatus === 'low-stock' || lowStockOnly) {
-        matchesStock = p.stock > 0 && p.stock <= (p.lowStockThreshold || 10);
+        matchesStock = p.stock <= (p.lowStockThreshold || 10);
       } else if (productStockStatus === 'out-of-stock') {
         matchesStock = p.stock === 0;
       } else if (productStockStatus === 'in-stock') {
@@ -846,7 +846,16 @@ export default function AdminDashboard() {
             <div className="flex items-center gap-3">
               {activeTab !== 'analytics' && (
                 <button
-                  onClick={() => setActiveTab('analytics')}
+                  onClick={() => {
+                    setActiveTab('analytics');
+                    setProductStockStatus('all');
+                    setLowStockOnly(false);
+                    setProductSearch('');
+                    setOrderSearch('');
+                    setOrderStatusFilter('all');
+                    setOrderPaymentFilter('all');
+                    setOrderDateFilter('all');
+                  }}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-xs ${
                     isDark
                       ? 'bg-stone-900/90 hover:bg-stone-800 text-gold-400 border-stone-800 hover:border-gold-500/40'
@@ -866,7 +875,16 @@ export default function AdminDashboard() {
                   <span>Admin</span>
                   <ChevronRight className="w-3 h-3 text-stone-400" />
                   <button
-                    onClick={() => setActiveTab('analytics')}
+                    onClick={() => {
+                      setActiveTab('analytics');
+                      setProductStockStatus('all');
+                      setLowStockOnly(false);
+                      setProductSearch('');
+                      setOrderSearch('');
+                      setOrderStatusFilter('all');
+                      setOrderPaymentFilter('all');
+                      setOrderDateFilter('all');
+                    }}
                     className={`hover:underline transition-colors ${
                       activeTab === 'analytics'
                         ? (isDark ? 'text-gold-400 font-bold' : 'text-forest-900 font-bold')
@@ -1119,7 +1137,7 @@ export default function AdminDashboard() {
                         <span className="flex items-center gap-0.5 text-[11px] text-emerald-500 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full">
                           <ArrowUpRight className="w-3 h-3" /> {data.kpis?.revenueGrowth || '+14.8%'}
                         </span>
-                        <span className="text-[10px] text-gold-500 font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="text-[10px] text-gold-500 font-bold bg-gold-500/10 px-2 py-0.5 rounded-full group-hover:scale-105 transition-transform">
                           Drill Down →
                         </span>
                       </div>
@@ -1155,7 +1173,7 @@ export default function AdminDashboard() {
                         <span className="flex items-center gap-0.5 text-[11px] text-gold-500 font-bold bg-gold-500/10 px-2 py-0.5 rounded-full">
                           <Sparkles className="w-3 h-3" /> Margin: 67.6%
                         </span>
-                        <span className="text-[10px] text-emerald-500 font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="text-[10px] text-emerald-500 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full group-hover:scale-105 transition-transform">
                           Drill Down →
                         </span>
                       </div>
@@ -1174,6 +1192,8 @@ export default function AdminDashboard() {
                 <div
                   onClick={() => {
                     setActiveTab('orders');
+                    setOrderStatusFilter('all');
+                    setOrderSearch('');
                     if (timeframe === '7days') setOrderDateFilter('7d');
                     else if (timeframe === '30days') setOrderDateFilter('30d');
                     else setOrderDateFilter('all');
@@ -1195,7 +1215,7 @@ export default function AdminDashboard() {
                         <span className={`text-[11px] font-medium ${isDark ? 'text-stone-400' : 'text-stone-600'}`}>
                           AOV: <strong className={isDark ? 'text-stone-200' : 'text-stone-900 font-bold'}>₹{overviewFilteredData?.avgOrderValue || 0}</strong>
                         </span>
-                        <span className="text-[10px] text-blue-500 font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="text-[10px] text-blue-500 font-bold bg-blue-500/10 px-2 py-0.5 rounded-full group-hover:scale-105 transition-transform">
                           Drill Down →
                         </span>
                       </div>
@@ -1213,7 +1233,10 @@ export default function AdminDashboard() {
 
                 {/* Customers Card (Click to drill down to Customers CRM) */}
                 <div
-                  onClick={() => setActiveTab('users')}
+                  onClick={() => {
+                    setActiveTab('users');
+                    setUserSearch('');
+                  }}
                   className={`glass-card rounded-2xl p-5 hover-lift animate-fade-in-scale delay-4 group cursor-pointer border transition-all ${
                     isDark ? 'hover:border-purple-500/40' : 'hover:border-purple-600/40 shadow-xs'
                   }`}
@@ -1231,7 +1254,7 @@ export default function AdminDashboard() {
                         <span className={`text-[11px] font-medium ${isDark ? 'text-purple-300' : 'text-purple-700 font-bold'}`}>
                           Repeat: <strong>{data.kpis?.repeatRate || '25%'}</strong>
                         </span>
-                        <span className="text-[10px] text-purple-500 font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="text-[10px] text-purple-500 font-bold bg-purple-500/10 px-2 py-0.5 rounded-full group-hover:scale-105 transition-transform">
                           Drill Down →
                         </span>
                       </div>
@@ -1250,7 +1273,14 @@ export default function AdminDashboard() {
               {/* Secondary KPI Row with Drill-Down Actions */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div
-                  onClick={() => setActiveTab('products')}
+                  onClick={() => {
+                    setActiveTab('products');
+                    setProductStockStatus('all');
+                    setLowStockOnly(false);
+                    setProductSearch('');
+                    if (overviewCategory !== 'all') setProductCategoryFilter(overviewCategory);
+                    else setProductCategoryFilter('all');
+                  }}
                   className={`glass-card rounded-xl p-4 hover-lift animate-fade-in delay-5 flex items-center gap-3 cursor-pointer group border transition-all ${
                     isDark ? 'hover:border-gold-500/30' : 'hover:border-stone-400 shadow-xs'
                   }`}
@@ -1266,11 +1296,19 @@ export default function AdminDashboard() {
                     <p className={`text-sm font-extrabold ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>
                       ₹{(data.kpis?.totalInventoryValue || 0).toLocaleString('en-IN')}
                     </p>
+                    <span className="text-[9px] text-gold-500 font-semibold group-hover:underline">Drill Down →</span>
                   </div>
                 </div>
 
                 <div
-                  onClick={() => { setActiveTab('products'); setProductStockStatus('low-stock'); }}
+                  onClick={() => {
+                    setActiveTab('products');
+                    setProductStockStatus('low-stock');
+                    setLowStockOnly(true);
+                    setProductSearch('');
+                    if (overviewCategory !== 'all') setProductCategoryFilter(overviewCategory);
+                    else setProductCategoryFilter('all');
+                  }}
                   className={`glass-card rounded-xl p-4 hover-lift animate-fade-in delay-6 flex items-center gap-3 cursor-pointer group border transition-all ${
                     isDark ? 'hover:border-amber-500/40' : 'hover:border-amber-600/40 shadow-xs'
                   }`}
@@ -1284,11 +1322,19 @@ export default function AdminDashboard() {
                   <div>
                     <span className={`text-[10px] uppercase font-bold ${isDark ? 'text-stone-500' : 'text-stone-600'}`}>Low Stock</span>
                     <p className="text-sm font-extrabold text-amber-500">{data.kpis?.lowStockCount || 0} SKUs</p>
+                    <span className="text-[9px] text-amber-500 font-semibold group-hover:underline">Drill Down →</span>
                   </div>
                 </div>
 
                 <div
-                  onClick={() => setActiveTab('products')}
+                  onClick={() => {
+                    setActiveTab('products');
+                    setProductStockStatus('all');
+                    setLowStockOnly(false);
+                    setProductSearch('');
+                    if (overviewCategory !== 'all') setProductCategoryFilter(overviewCategory);
+                    else setProductCategoryFilter('all');
+                  }}
                   className={`glass-card rounded-xl p-4 hover-lift animate-fade-in delay-7 flex items-center gap-3 cursor-pointer group border transition-all ${
                     isDark ? 'hover:border-forest-500/40' : 'hover:border-forest-600/40 shadow-xs'
                   }`}
@@ -1302,15 +1348,18 @@ export default function AdminDashboard() {
                   <div>
                     <span className={`text-[10px] uppercase font-bold ${isDark ? 'text-stone-500' : 'text-stone-600'}`}>Product Lines</span>
                     <p className={`text-sm font-extrabold ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>{data.kpis?.totalProductsCount || 0}</p>
+                    <span className="text-[9px] text-forest-400 font-semibold group-hover:underline">Drill Down →</span>
                   </div>
                 </div>
 
                 <div
-                  className={`glass-card rounded-xl p-4 hover-lift animate-fade-in delay-8 flex items-center gap-3 border ${
-                    isDark ? '' : 'shadow-xs'
+                  onClick={() => setActiveTab('audit')}
+                  className={`glass-card rounded-xl p-4 hover-lift animate-fade-in delay-8 flex items-center gap-3 border cursor-pointer group transition-all ${
+                    isDark ? 'hover:border-emerald-500/40' : 'hover:border-emerald-600/40 shadow-xs'
                   }`}
+                  title="Click to drill down into Operations & Audit Trail"
                 >
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110 ${
                     isDark ? 'bg-emerald-950/40 text-emerald-400' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                   }`}>
                     <CheckCircle2 className="w-4 h-4" />
@@ -1318,6 +1367,7 @@ export default function AdminDashboard() {
                   <div>
                     <span className={`text-[10px] uppercase font-bold ${isDark ? 'text-stone-500' : 'text-stone-600'}`}>Operations</span>
                     <p className="text-sm font-extrabold text-emerald-500">Optimal (99.8%)</p>
+                    <span className="text-[9px] text-emerald-500 font-semibold group-hover:underline">Drill Down →</span>
                   </div>
                 </div>
               </div>
@@ -1335,16 +1385,31 @@ export default function AdminDashboard() {
                         Monthly trend analysis {timeframe !== 'all' ? `(${timeframe})` : ''} {overviewCategory !== 'all' ? `• ${overviewCategory}` : ''}
                       </p>
                     </div>
-                    <div className="flex items-center gap-4 text-[11px]">
+                    <div className="flex items-center gap-3 text-[11px]">
                       <span className={`flex items-center gap-1.5 font-bold ${isDark ? 'text-gold-400' : 'text-forest-900'}`}>
                         <span className={`w-2.5 h-2.5 rounded-full ${isDark ? 'bg-gold-500' : 'bg-forest-800'}`} /> Revenue
                       </span>
                       <span className="flex items-center gap-1.5 text-emerald-500 font-bold">
                         <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Profit
                       </span>
+                      <button
+                        onClick={() => setShowFinancialDrillDown(true)}
+                        className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all flex items-center gap-1 ${
+                          isDark
+                            ? 'bg-gold-500/10 text-gold-400 border-gold-500/30 hover:bg-gold-500/20'
+                            : 'bg-gold-50 text-forest-900 border-gold-300 hover:bg-gold-100'
+                        }`}
+                        title="Open Financial & Margin Drill-Down"
+                      >
+                        Financial Drill-Down →
+                      </button>
                     </div>
                   </div>
-                  <div className="h-72 w-full pt-2">
+                  <div
+                    className="h-72 w-full pt-2 cursor-pointer"
+                    onClick={() => setShowFinancialDrillDown(true)}
+                    title="Click chart to drill down into Financial & Unit Economics"
+                  >
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={overviewFilteredData?.trend || []}>
                         <defs>
@@ -1384,15 +1449,34 @@ export default function AdminDashboard() {
                       Revenue by Category
                     </h3>
                     <p className={`text-[11px] ${isDark ? 'text-stone-500' : 'text-stone-600'}`}>
-                      Sales distribution (Click row to filter)
+                      Sales distribution (Click slice or row to drill down)
                     </p>
                   </div>
                   <div className="h-48 w-full flex items-center justify-center">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
-                        <Pie data={overviewFilteredData?.categoryBreakdown || []} dataKey="sales" nameKey="category" cx="50%" cy="50%" innerRadius={50} outerRadius={75} paddingAngle={5}>
+                        <Pie
+                          data={overviewFilteredData?.categoryBreakdown || []}
+                          dataKey="sales"
+                          nameKey="category"
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={50}
+                          outerRadius={75}
+                          paddingAngle={5}
+                          cursor="pointer"
+                          onClick={(entry) => {
+                            if (entry && entry.category) {
+                              setOverviewCategory(overviewCategory === entry.category ? 'all' : entry.category);
+                            }
+                          }}
+                        >
                           {(overviewFilteredData?.categoryBreakdown || []).map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]} />
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]}
+                              cursor="pointer"
+                            />
                           ))}
                         </Pie>
                         <Tooltip
@@ -1412,7 +1496,7 @@ export default function AdminDashboard() {
                       <div
                         key={idx}
                         onClick={() => setOverviewCategory(overviewCategory === item.category ? 'all' : item.category)}
-                        className={`flex items-center justify-between p-1.5 rounded-lg cursor-pointer transition-colors ${
+                        className={`flex items-center justify-between p-1.5 rounded-lg cursor-pointer transition-colors group ${
                           overviewCategory === item.category
                             ? (isDark ? 'bg-gold-500/20 text-gold-400 font-bold' : 'bg-forest-900/10 text-forest-950 font-bold')
                             : (isDark ? 'hover:bg-stone-800/40 text-stone-400' : 'hover:bg-stone-100 text-stone-700')
@@ -1423,11 +1507,38 @@ export default function AdminDashboard() {
                           <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[idx % CATEGORY_COLORS.length] }} />
                           <span className={isDark ? 'text-stone-300' : 'text-stone-800'}>{item.category}</span>
                         </div>
-                        <span className={`font-bold ${isDark ? 'text-stone-200' : 'text-stone-900'}`}>
-                          ₹{item.sales.toLocaleString()}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`font-bold ${isDark ? 'text-stone-200' : 'text-stone-900'}`}>
+                            ₹{item.sales.toLocaleString()}
+                          </span>
+                          <span className="text-[10px] text-gold-500 font-semibold opacity-0 group-hover:opacity-100">
+                            {overviewCategory === item.category ? 'Filtered ✓' : 'Drill →'}
+                          </span>
+                        </div>
                       </div>
                     ))}
+                    {overviewCategory !== 'all' && (
+                      <div className="pt-2 flex items-center justify-between">
+                        <button
+                          onClick={() => setOverviewCategory('all')}
+                          className="text-[11px] text-stone-500 hover:text-stone-300 underline"
+                        >
+                          Clear filter
+                        </button>
+                        <button
+                          onClick={() => {
+                            setActiveTab('products');
+                            setProductCategoryFilter(overviewCategory);
+                            setProductStockStatus('all');
+                            setLowStockOnly(false);
+                            setProductSearch('');
+                          }}
+                          className={`text-[11px] font-bold flex items-center gap-1 ${isDark ? 'text-gold-400 hover:underline' : 'text-forest-900 hover:underline'}`}
+                        >
+                          Drill into Products →
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1441,7 +1552,7 @@ export default function AdminDashboard() {
                       Payment Gateway Distribution
                     </h3>
                     <p className={`text-[11px] ${isDark ? 'text-stone-500' : 'text-stone-600'}`}>
-                      Volume processed by channel
+                      Volume processed by channel (Click any bar to drill down to Orders)
                     </p>
                   </div>
                   <div className="h-52 w-full pt-2">
@@ -1459,7 +1570,18 @@ export default function AdminDashboard() {
                           }}
                           formatter={(val) => [`₹${val.toLocaleString()}`, 'Volume']}
                         />
-                        <Bar dataKey="amount" fill={isDark ? "#C6A45B" : "#123E30"} radius={[8, 8, 0, 0]} />
+                        <Bar
+                          dataKey="amount"
+                          fill={isDark ? "#C6A45B" : "#123E30"}
+                          radius={[8, 8, 0, 0]}
+                          cursor="pointer"
+                          onClick={(entry) => {
+                            if (entry && entry.method) {
+                              setActiveTab('orders');
+                              setOrderPaymentFilter(entry.method.includes('Cash') || entry.method.includes('COD') ? 'cod' : 'prepaid');
+                            }
+                          }}
+                        />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -1522,30 +1644,38 @@ export default function AdminDashboard() {
                   </div>
                   <div className="space-y-2">
                     {(overviewFilteredData?.topProducts || displayedTopProducts).map((p, i) => {
-                      const fullProd = productsList.find(x => x.name?.toLowerCase() === p.name?.toLowerCase() || x.id === p.id);
+                      const fullProd = productsList.find(x => x.name?.toLowerCase() === p.name?.toLowerCase() || x.id === (p.id || p.productId));
+                      const targetProd = fullProd ? { ...p, ...fullProd } : {
+                        ...p,
+                        id: p.id || p.productId || `prod_${i}`,
+                        price: p.price || 499,
+                        stock: p.stock ?? 35,
+                        category: p.category || 'Hair Care',
+                        image: p.image || '/marketing/IMG-20260804-WA0013.jpg'
+                      };
                       return (
                         <div
                           key={i}
-                          onClick={() => setSelectedProductDrillDown(fullProd || p)}
+                          onClick={() => setSelectedProductDrillDown(targetProd)}
                           className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer group hover-lift ${
                             isDark
                               ? 'bg-stone-900/40 border-stone-800/30 hover:bg-stone-800/60 hover:border-gold-500/30'
                               : 'bg-stone-50/80 border-stone-200 hover:bg-white hover:border-forest-600/30 shadow-xs'
                           }`}
-                          title="Click to view detailed product performance"
+                          title="Click to drill down into product analytics & formulation details"
                         >
                           <div className="flex items-center gap-3">
                             <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-extrabold ${i === 0 ? 'bg-gold-500/20 text-gold-400' : i === 1 ? 'bg-stone-700 text-stone-300' : 'bg-stone-800 text-stone-500'}`}>
                               {i === 0 ? <Crown className="w-3.5 h-3.5" /> : `#${i + 1}`}
                             </span>
-                            <img src={p.image || '/marketing/IMG-20260804-WA0013.jpg'} alt="" className="w-9 h-9 rounded-lg object-cover bg-stone-800" />
+                            <img src={targetProd.image || targetProd.images?.[0] || '/marketing/IMG-20260804-WA0013.jpg'} alt="" className="w-9 h-9 rounded-lg object-cover bg-stone-800" />
                             <div>
-                              <p className={`text-xs font-bold line-clamp-1 group-hover:text-gold-500 transition-colors ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>{p.name}</p>
-                              <p className="text-[10px] text-stone-500">{p.unitsSold} units sold • <span className="text-gold-500 font-semibold">Drill down →</span></p>
+                              <p className={`text-xs font-bold line-clamp-1 group-hover:text-gold-500 transition-colors ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>{targetProd.name}</p>
+                              <p className="text-[10px] text-stone-500">{targetProd.unitsSold || 0} units sold • <span className="text-gold-500 font-semibold">Drill down →</span></p>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className={`text-sm font-bold ${isDark ? 'text-gold-400' : 'text-forest-900'}`}>₹{p.revenue?.toLocaleString?.() || p.revenue}</span>
+                            <span className={`text-sm font-bold ${isDark ? 'text-gold-400' : 'text-forest-900'}`}>₹{(targetProd.revenue || 0).toLocaleString()}</span>
                             <Eye className="w-3.5 h-3.5 text-stone-400 group-hover:text-gold-500 opacity-60 group-hover:opacity-100 transition-opacity" />
                           </div>
                         </div>
@@ -1572,7 +1702,12 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     <button
-                      onClick={() => { setActiveTab('products'); setLowStockOnly(true); }}
+                      onClick={() => {
+                        setActiveTab('products');
+                        setProductStockStatus('low-stock');
+                        setLowStockOnly(true);
+                        setProductSearch('');
+                      }}
                       className={`text-[11px] font-bold flex items-center gap-1 ${isDark ? 'text-gold-400 hover:underline' : 'text-forest-900 hover:underline'}`}
                     >
                       Manage <ArrowRight className="w-3 h-3" />
@@ -1584,25 +1719,33 @@ export default function AdminDashboard() {
                         <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2 opacity-60" />
                         <p className={`text-xs ${isDark ? 'text-stone-400' : 'text-stone-600 font-medium'}`}>All items well stocked!</p>
                       </div>
-                    ) : (data.lowStockAlerts || []).map((item) => (
-                      <div
-                        key={item.id}
-                        className={`flex items-center justify-between p-3 rounded-xl border transition-colors ${
-                          isDark ? 'bg-amber-950/10 border-amber-800/20 hover:bg-amber-950/20' : 'bg-amber-50 border-amber-200 hover:bg-amber-100/60'
-                        }`}
-                      >
-                        <div>
-                          <p className={`text-xs font-bold ${isDark ? 'text-stone-200' : 'text-stone-900'}`}>{item.name}</p>
-                          <p className="text-[10px] text-stone-500">SKU: {item.sku} • Stock: <span className="text-red-500 font-bold">{item.stock}</span></p>
-                        </div>
-                        <button
-                          onClick={() => handleQuickStockAdjust(item.id, 10, item.name)}
-                          className="text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-2.5 py-1.5 rounded-lg border border-emerald-700/40 transition-colors shadow-xs"
+                    ) : (data.lowStockAlerts || []).map((item) => {
+                      const fullItem = productsList.find(x => x.id === item.id || x.name === item.name);
+                      return (
+                        <div
+                          key={item.id}
+                          onClick={() => setSelectedProductDrillDown(fullItem || item)}
+                          className={`flex items-center justify-between p-3 rounded-xl border transition-colors cursor-pointer group hover-lift ${
+                            isDark ? 'bg-amber-950/10 border-amber-800/20 hover:bg-amber-950/20' : 'bg-amber-50 border-amber-200 hover:bg-amber-100/60'
+                          }`}
+                          title="Click to drill down into product details"
                         >
-                          +10 Restock
-                        </button>
-                      </div>
-                    ))}
+                          <div>
+                            <p className={`text-xs font-bold ${isDark ? 'text-stone-200' : 'text-stone-900'}`}>{item.name}</p>
+                            <p className="text-[10px] text-stone-500">SKU: {item.sku} • Stock: <span className="text-red-500 font-bold">{item.stock}</span> • <span className="text-amber-500 font-semibold">Drill down →</span></p>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleQuickStockAdjust(item.id, 10, item.name);
+                            }}
+                            className="text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-2.5 py-1.5 rounded-lg border border-emerald-700/40 transition-colors shadow-xs"
+                          >
+                            +10 Restock
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -2520,7 +2663,7 @@ export default function AdminDashboard() {
             <div className="flex items-start justify-between pb-4 border-b border-stone-800/40">
               <div className="flex items-center gap-3">
                 <img
-                  src={selectedProductDrillDown.image || '/marketing/IMG-20260804-WA0013.jpg'}
+                  src={selectedProductDrillDown.image || selectedProductDrillDown.images?.[0] || '/marketing/IMG-20260804-WA0013.jpg'}
                   alt=""
                   className="w-12 h-12 rounded-2xl object-cover bg-stone-800 border border-gold-500/30 shadow-md"
                 />
@@ -2529,7 +2672,7 @@ export default function AdminDashboard() {
                     <span className="text-[10px] font-bold uppercase tracking-wider bg-gold-500/20 text-gold-400 border border-gold-500/30 px-2 py-0.5 rounded-full">
                       Product Drill-Down
                     </span>
-                    <span className="text-xs text-stone-500">{selectedProductDrillDown.category}</span>
+                    <span className="text-xs text-stone-500">{selectedProductDrillDown.category || 'Botanical'}</span>
                   </div>
                   <h3 className={`font-serif font-bold text-lg mt-0.5 ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>
                     {selectedProductDrillDown.name}
@@ -2550,22 +2693,22 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className={`p-3 rounded-2xl border text-center ${isDark ? 'bg-stone-800/40 border-stone-700/40' : 'bg-stone-50 border-stone-200'}`}>
                 <span className="text-[10px] font-bold uppercase text-stone-500 block">Selling Price</span>
-                <p className={`text-base font-extrabold mt-0.5 ${isDark ? 'text-gold-400' : 'text-forest-900'}`}>₹{selectedProductDrillDown.price}</p>
-                <span className="text-[10px] text-stone-500 line-through">₹{selectedProductDrillDown.mrp || selectedProductDrillDown.price}</span>
+                <p className={`text-base font-extrabold mt-0.5 ${isDark ? 'text-gold-400' : 'text-forest-900'}`}>₹{selectedProductDrillDown.price || 499}</p>
+                <span className="text-[10px] text-stone-500 line-through">₹{selectedProductDrillDown.mrp || (selectedProductDrillDown.price ? Math.round(selectedProductDrillDown.price * 1.3) : 699)}</span>
               </div>
               <div className={`p-3 rounded-2xl border text-center ${isDark ? 'bg-stone-800/40 border-stone-700/40' : 'bg-stone-50 border-stone-200'}`}>
                 <span className="text-[10px] font-bold uppercase text-stone-500 block">Est. Margin</span>
                 <p className="text-base font-extrabold text-emerald-400 mt-0.5">
-                  {Math.round(((selectedProductDrillDown.price - (selectedProductDrillDown.costPrice || Math.round(selectedProductDrillDown.price * 0.35))) / selectedProductDrillDown.price) * 100)}%
+                  {selectedProductDrillDown.price ? Math.round(((selectedProductDrillDown.price - (selectedProductDrillDown.costPrice || Math.round(selectedProductDrillDown.price * 0.35))) / selectedProductDrillDown.price) * 100) : 65}%
                 </p>
-                <span className="text-[10px] text-stone-500">Cost: ₹{selectedProductDrillDown.costPrice || Math.round(selectedProductDrillDown.price * 0.35)}</span>
+                <span className="text-[10px] text-stone-500">Cost: ₹{selectedProductDrillDown.costPrice || Math.round((selectedProductDrillDown.price || 499) * 0.35)}</span>
               </div>
               <div className={`p-3 rounded-2xl border text-center ${isDark ? 'bg-stone-800/40 border-stone-700/40' : 'bg-stone-50 border-stone-200'}`}>
                 <span className="text-[10px] font-bold uppercase text-stone-500 block">Stock Level</span>
-                <p className={`text-base font-extrabold mt-0.5 ${selectedProductDrillDown.stock <= 10 ? 'text-red-400' : 'text-emerald-400'}`}>
-                  {selectedProductDrillDown.stock}
+                <p className={`text-base font-extrabold mt-0.5 ${(selectedProductDrillDown.stock ?? 35) <= 10 ? 'text-red-400' : 'text-emerald-400'}`}>
+                  {selectedProductDrillDown.stock ?? 35}
                 </p>
-                <span className="text-[10px] text-stone-500">{selectedProductDrillDown.stock <= 10 ? 'Low Stock Alert' : 'Healthy Stock'}</span>
+                <span className="text-[10px] text-stone-500">{(selectedProductDrillDown.stock ?? 35) <= 10 ? 'Low Stock Alert' : 'Healthy Stock'}</span>
               </div>
               <div className={`p-3 rounded-2xl border text-center ${isDark ? 'bg-stone-800/40 border-stone-700/40' : 'bg-stone-50 border-stone-200'}`}>
                 <span className="text-[10px] font-bold uppercase text-stone-500 block">Customer Rating</span>
@@ -2580,14 +2723,17 @@ export default function AdminDashboard() {
             <div className={`p-4 rounded-2xl border space-y-2.5 ${isDark ? 'bg-stone-800/30 border-stone-700/40' : 'bg-stone-50 border-stone-200'}`}>
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase text-stone-500">Quick Inventory Restock</span>
-                <span className="text-xs font-semibold text-stone-400">Current: <strong className="text-emerald-400">{selectedProductDrillDown.stock} units</strong></span>
+                <span className="text-xs font-semibold text-stone-400">Current: <strong className="text-emerald-400">{selectedProductDrillDown.stock ?? 35} units</strong></span>
               </div>
               <div className="grid grid-cols-4 gap-2">
                 {[10, 25, 50, 100].map(delta => (
                   <button
                     key={delta}
                     onClick={async () => {
-                      await handleQuickStockAdjust(selectedProductDrillDown.id, delta, selectedProductDrillDown.name);
+                      const prodId = selectedProductDrillDown.id || selectedProductDrillDown.productId || selectedProductDrillDown._id;
+                      if (prodId) {
+                        await handleQuickStockAdjust(prodId, delta, selectedProductDrillDown.name);
+                      }
                       setSelectedProductDrillDown(prev => ({ ...prev, stock: (prev.stock || 0) + delta }));
                     }}
                     className={`py-2 px-3 rounded-xl font-bold text-xs border transition-all flex items-center justify-center gap-1 ${
@@ -2622,21 +2768,45 @@ export default function AdminDashboard() {
             </div>
 
             {/* Actions */}
-            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-stone-800/40">
+            <div className="flex items-center justify-between gap-2.5 pt-3 border-t border-stone-800/40">
               <button
-                onClick={() => { setSelectedProductDrillDown(null); handleOpenEditProduct(selectedProductDrillDown); }}
-                className="bg-gold-500 hover:bg-gold-600 text-stone-950 font-bold text-xs px-4 py-2 rounded-xl transition-all shadow-sm flex items-center gap-1.5"
-              >
-                <Edit className="w-3.5 h-3.5" /> Edit Full Details
-              </button>
-              <button
-                onClick={() => setSelectedProductDrillDown(null)}
-                className={`text-xs font-bold px-4 py-2 rounded-xl border transition-colors ${
-                  isDark ? 'bg-stone-800 text-stone-300 border-stone-700 hover:bg-stone-700' : 'bg-stone-100 text-stone-700 border-stone-200 hover:bg-stone-200'
+                onClick={() => {
+                  const prod = productsList.find(x => x.name?.toLowerCase() === selectedProductDrillDown.name?.toLowerCase() || x.id === (selectedProductDrillDown.id || selectedProductDrillDown.productId));
+                  setSelectedProductDrillDown(null);
+                  setActiveTab('products');
+                  setProductStockStatus('all');
+                  setLowStockOnly(false);
+                  if (prod) {
+                    setProductSearch(prod.name);
+                  }
+                }}
+                className={`text-xs font-bold px-4 py-2 rounded-xl border transition-colors flex items-center gap-1.5 ${
+                  isDark ? 'bg-stone-800 text-gold-400 border-stone-700 hover:bg-stone-700' : 'bg-stone-100 text-forest-900 border-stone-300 hover:bg-stone-200'
                 }`}
               >
-                Close
+                <span>Drill Down to Catalog</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    const full = productsList.find(x => x.name?.toLowerCase() === selectedProductDrillDown.name?.toLowerCase() || x.id === (selectedProductDrillDown.id || selectedProductDrillDown.productId)) || selectedProductDrillDown;
+                    setSelectedProductDrillDown(null);
+                    handleOpenEditProduct(full);
+                  }}
+                  className="bg-gold-500 hover:bg-gold-600 text-stone-950 font-bold text-xs px-4 py-2 rounded-xl transition-all shadow-sm flex items-center gap-1.5"
+                >
+                  <Edit className="w-3.5 h-3.5" /> Edit Full Details
+                </button>
+                <button
+                  onClick={() => setSelectedProductDrillDown(null)}
+                  className={`text-xs font-bold px-4 py-2 rounded-xl border transition-colors ${
+                    isDark ? 'bg-stone-800 text-stone-300 border-stone-700 hover:bg-stone-700' : 'bg-stone-100 text-stone-700 border-stone-200 hover:bg-stone-200'
+                  }`}
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -2686,7 +2856,10 @@ export default function AdminDashboard() {
 
             {/* 3-Card Metrics */}
             {(() => {
-              const customerOrders = ordersList.filter(o => o.userEmail === selectedCustomerDetails.email || o.userId === selectedCustomerDetails.id);
+              const customerOrders = ordersList.filter(o =>
+                (o.userEmail && o.userEmail.toLowerCase() === selectedCustomerDetails.email?.toLowerCase()) ||
+                (o.userId && o.userId === selectedCustomerDetails.id)
+              );
               const totalSpent = customerOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
               const aov = customerOrders.length ? Math.round(totalSpent / customerOrders.length) : 0;
               return (
@@ -2698,17 +2871,32 @@ export default function AdminDashboard() {
                     </div>
                     <div className={`p-3 rounded-2xl border text-center ${isDark ? 'bg-stone-800/40 border-stone-700/40' : 'bg-stone-50 border-stone-200'}`}>
                       <span className="text-[10px] font-bold uppercase text-stone-500 block">Lifetime Value</span>
-                      <p className={`text-base font-extrabold mt-0.5 ${isDark ? 'text-gold-400' : 'text-forest-900'}`}>₹{totalSpent}</p>
+                      <p className={`text-base font-extrabold mt-0.5 ${isDark ? 'text-gold-400' : 'text-forest-900'}`}>₹{totalSpent.toLocaleString()}</p>
                     </div>
                     <div className={`p-3 rounded-2xl border text-center ${isDark ? 'bg-stone-800/40 border-stone-700/40' : 'bg-stone-50 border-stone-200'}`}>
                       <span className="text-[10px] font-bold uppercase text-stone-500 block">Avg Order</span>
-                      <p className="text-base font-extrabold text-emerald-400 mt-0.5">₹{aov}</p>
+                      <p className="text-base font-extrabold text-emerald-400 mt-0.5">₹{aov.toLocaleString()}</p>
                     </div>
                   </div>
 
                   {/* Customer Order History */}
                   <div className="space-y-2">
-                    <span className="text-xs font-bold uppercase text-stone-500 tracking-wider block">Recent Orders History</span>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold uppercase text-stone-500 tracking-wider block">Recent Orders History</span>
+                      {customerOrders.length > 0 && (
+                        <button
+                          onClick={() => {
+                            setSelectedCustomerDetails(null);
+                            setActiveTab('orders');
+                            setOrderSearch(selectedCustomerDetails.email || selectedCustomerDetails.name);
+                            setOrderStatusFilter('all');
+                          }}
+                          className="text-[11px] font-bold text-gold-500 hover:underline flex items-center gap-1"
+                        >
+                          Drill down to all orders ({customerOrders.length}) →
+                        </button>
+                      )}
+                    </div>
                     {customerOrders.length === 0 ? (
                       <p className="text-xs text-stone-500 text-center py-6">No orders placed by this customer yet.</p>
                     ) : (
@@ -2751,12 +2939,27 @@ export default function AdminDashboard() {
               >
                 {selectedCustomerDetails.role === 'admin' ? 'Demote to Customer' : 'Promote to Admin'}
               </button>
-              <button
-                onClick={() => setSelectedCustomerDetails(null)}
-                className="bg-gold-500 hover:bg-gold-600 text-stone-950 font-bold text-xs px-5 py-2 rounded-xl transition-all shadow-sm"
-              >
-                Done
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setSelectedCustomerDetails(null);
+                    setActiveTab('orders');
+                    setOrderSearch(selectedCustomerDetails.email || selectedCustomerDetails.name);
+                    setOrderStatusFilter('all');
+                  }}
+                  className={`text-xs font-bold px-4 py-2 rounded-xl border transition-colors ${
+                    isDark ? 'bg-stone-800 text-stone-300 hover:bg-stone-700 border-stone-700' : 'bg-stone-100 text-stone-700 hover:bg-stone-200 border-stone-200'
+                  }`}
+                >
+                  View Orders
+                </button>
+                <button
+                  onClick={() => setSelectedCustomerDetails(null)}
+                  className="bg-gold-500 hover:bg-gold-600 text-stone-950 font-bold text-xs px-5 py-2 rounded-xl transition-all shadow-sm"
+                >
+                  Done
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -2833,10 +3036,16 @@ export default function AdminDashboard() {
 
       {/* ============ FINANCIAL DRILL-DOWN MODAL ============ */}
       {showFinancialDrillDown && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className={`relative w-full max-w-3xl rounded-3xl p-6 md:p-8 border shadow-2xl transition-all ${
-            isDark ? 'bg-stone-900 border-stone-800 text-stone-100' : 'bg-white border-stone-200 text-stone-900'
-          }`}>
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in"
+          onClick={() => setShowFinancialDrillDown(false)}
+        >
+          <div
+            className={`relative w-full max-w-3xl rounded-3xl p-6 md:p-8 border shadow-2xl transition-all max-h-[90vh] overflow-y-auto ${
+              isDark ? 'bg-stone-900 border-stone-800 text-stone-100' : 'bg-white border-stone-200 text-stone-900'
+            }`}
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-5 border-b border-stone-200 dark:border-stone-800">
               <div className="flex items-center gap-3">
@@ -2868,28 +3077,28 @@ export default function AdminDashboard() {
               <div className={`p-4 rounded-2xl border ${isDark ? 'bg-stone-800/50 border-stone-800' : 'bg-stone-50 border-stone-200'}`}>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500">Gross Sales</span>
                 <div className="text-xl font-bold mt-1 text-forest-950 dark:text-white">
-                  ₹{overviewFilteredData.revenue.toLocaleString()}
+                  ₹{(overviewFilteredData?.revenue || 0).toLocaleString()}
                 </div>
                 <span className="text-[10px] font-semibold text-emerald-600">+14.8% vs prev period</span>
               </div>
               <div className={`p-4 rounded-2xl border ${isDark ? 'bg-stone-800/50 border-stone-800' : 'bg-stone-50 border-stone-200'}`}>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500">Gross Margin</span>
                 <div className="text-xl font-bold mt-1 text-emerald-600 dark:text-emerald-400">
-                  ₹{overviewFilteredData.grossProfit.toLocaleString()}
+                  ₹{(overviewFilteredData?.grossProfit || 0).toLocaleString()}
                 </div>
                 <span className="text-[10px] font-semibold text-stone-500">67.6% net yield</span>
               </div>
               <div className={`p-4 rounded-2xl border ${isDark ? 'bg-stone-800/50 border-stone-800' : 'bg-stone-50 border-stone-200'}`}>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500">Avg Order Value</span>
                 <div className="text-xl font-bold mt-1 text-blue-600 dark:text-blue-400">
-                  ₹{overviewFilteredData.ordersCount > 0 ? Math.round(overviewFilteredData.revenue / overviewFilteredData.ordersCount).toLocaleString() : '0'}
+                  ₹{overviewFilteredData?.ordersCount > 0 ? Math.round((overviewFilteredData?.revenue || 0) / overviewFilteredData.ordersCount).toLocaleString() : '0'}
                 </div>
-                <span className="text-[10px] font-semibold text-stone-500">From {overviewFilteredData.ordersCount} total orders</span>
+                <span className="text-[10px] font-semibold text-stone-500">From {overviewFilteredData?.ordersCount || 0} total orders</span>
               </div>
               <div className={`p-4 rounded-2xl border ${isDark ? 'bg-stone-800/50 border-stone-800' : 'bg-stone-50 border-stone-200'}`}>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500">GST Collected (5%)</span>
                 <div className="text-xl font-bold mt-1 text-purple-600 dark:text-purple-400">
-                  ₹{Math.round(overviewFilteredData.revenue * 0.05).toLocaleString()}
+                  ₹{Math.round((overviewFilteredData?.revenue || 0) * 0.05).toLocaleString()}
                 </div>
                 <span className="text-[10px] font-semibold text-stone-500">Ayurvedic HSN 3004</span>
               </div>
@@ -2899,26 +3108,29 @@ export default function AdminDashboard() {
             <div className={`p-5 rounded-2xl border mb-6 ${isDark ? 'bg-stone-800/40 border-stone-800' : 'bg-stone-50/70 border-stone-200'}`}>
               <h3 className="text-xs font-bold uppercase tracking-wider mb-4 flex items-center justify-between">
                 <span>Revenue Contribution by Category</span>
-                <span className="text-stone-400 font-normal">Click category to isolate</span>
+                <span className="text-stone-400 font-normal">Click category to isolate & drill down</span>
               </h3>
               <div className="space-y-3">
-                {overviewFilteredData.categoryBreakdown.map((cat, idx) => {
-                  const pct = overviewFilteredData.revenue > 0 ? Math.round((cat.value / overviewFilteredData.revenue) * 100) : 0;
+                {(overviewFilteredData?.categoryBreakdown || []).map((cat, idx) => {
+                  const catSales = cat.sales ?? cat.value ?? 0;
+                  const catName = cat.category || cat.name || 'Category';
+                  const pct = (overviewFilteredData?.revenue || 0) > 0 ? Math.round((catSales / overviewFilteredData.revenue) * 100) : 0;
                   return (
                     <div
-                      key={cat.name}
+                      key={catName}
                       onClick={() => {
-                        setOverviewCategory(cat.name);
+                        setOverviewCategory(catName);
                         setShowFinancialDrillDown(false);
                       }}
                       className="cursor-pointer group"
+                      title={`Click to drill down and isolate ${catName}`}
                     >
                       <div className="flex justify-between items-center text-xs mb-1">
                         <span className="font-semibold group-hover:text-forest-700 dark:group-hover:text-gold-400 transition-colors">
-                          {cat.name}
+                          {catName}
                         </span>
                         <span className="font-mono font-bold">
-                          ₹{cat.value.toLocaleString()} <span className="text-stone-400 font-normal text-[11px]">({pct}%)</span>
+                          ₹{catSales.toLocaleString()} <span className="text-stone-400 font-normal text-[11px]">({pct}%)</span>
                         </span>
                       </div>
                       <div className="h-2 w-full bg-stone-200 dark:bg-stone-700 rounded-full overflow-hidden">
@@ -2926,7 +3138,7 @@ export default function AdminDashboard() {
                           className="h-full rounded-full transition-all duration-500"
                           style={{
                             width: `${pct}%`,
-                            backgroundColor: cat.color || '#1b4332'
+                            backgroundColor: cat.color || CATEGORY_COLORS[idx % CATEGORY_COLORS.length] || '#1b4332'
                           }}
                         />
                       </div>
@@ -2957,6 +3169,11 @@ export default function AdminDashboard() {
                   onClick={() => {
                     setShowFinancialDrillDown(false);
                     setActiveTab('orders');
+                    setOrderStatusFilter('all');
+                    setOrderSearch('');
+                    if (timeframe === '7days') setOrderDateFilter('7d');
+                    else if (timeframe === '30days') setOrderDateFilter('30d');
+                    else setOrderDateFilter('all');
                   }}
                   className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-forest-900 hover:bg-forest-800 text-white font-bold text-xs shadow-lg shadow-forest-950/20 transition-all hover:scale-[1.02]"
                 >
