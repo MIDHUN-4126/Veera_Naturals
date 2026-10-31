@@ -12,7 +12,7 @@ import {
   ChevronsLeft, ChevronsRight, ArrowRight, ArrowLeft, TrendingDown, Box, Heart, Star, ChevronDown, User, RotateCcw
 } from 'lucide-react';
 import {
-  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, Brush,
+  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip,
   PieChart, Pie, Cell, BarChart, Bar, Legend, CartesianGrid, LineChart, Line
 } from 'recharts';
 import { useAuth } from '../../context/AuthContext';
@@ -643,45 +643,6 @@ export default function AdminDashboard() {
   const outOfStockCount = useMemo(() => productsList.filter(p => p.stock === 0).length, [productsList]);
   const healthyStockCount = useMemo(() => productsList.filter(p => p.stock > 20).length, [productsList]);
 
-  // ==================== REVENUE TREND SLICING SLIDER ====================
-  const fullTrendData = overviewFilteredData?.trend || [];
-  const [sliceStartIndex, setSliceStartIndex] = useState(0);
-  const [sliceEndIndex, setSliceEndIndex] = useState(Math.max(0, (fullTrendData.length || 6) - 1));
-
-  // Sync slice range when timeframe or category changes
-  useEffect(() => {
-    if (fullTrendData.length > 0) {
-      setSliceStartIndex(0);
-      setSliceEndIndex(fullTrendData.length - 1);
-    }
-  }, [fullTrendData.length, timeframe, overviewCategory]);
-
-  // Sliced trend data passed to the AreaChart
-  const displayedTrendData = useMemo(() => {
-    if (!fullTrendData.length) return [];
-    const start = Math.max(0, Math.min(sliceStartIndex, fullTrendData.length - 1));
-    const end = Math.max(start, Math.min(sliceEndIndex, fullTrendData.length - 1));
-    return fullTrendData.slice(start, end + 1);
-  }, [fullTrendData, sliceStartIndex, sliceEndIndex]);
-
-  // Dynamic window stats for the sliced interval
-  const slicedWindowStats = useMemo(() => {
-    if (!displayedTrendData.length) return { revenue: 0, profit: 0, margin: 0, peakMonth: 'N/A' };
-    const totalRev = displayedTrendData.reduce((acc, curr) => acc + (curr.revenue || 0), 0);
-    const totalProf = displayedTrendData.reduce((acc, curr) => acc + (curr.profit || 0), 0);
-    const margin = totalRev > 0 ? Math.round((totalProf / totalRev) * 100) : 0;
-    let peak = displayedTrendData[0];
-    displayedTrendData.forEach(d => {
-      if ((d.revenue || 0) > (peak.revenue || 0)) peak = d;
-    });
-    return {
-      revenue: totalRev,
-      profit: totalProf,
-      margin,
-      peakMonth: `${peak?.month || 'N/A'} (₹${(peak?.revenue || 0).toLocaleString()})`
-    };
-  }, [displayedTrendData]);
-
   // ==================== COMPUTED METRICS ====================
   const pendingOrdersCount = ordersList.filter(o => o.fulfillmentStatus === 'pending').length;
   const lowStockCount = productsList.filter(p => p.stock <= (p.lowStockThreshold || 10)).length;
@@ -861,6 +822,45 @@ export default function AdminDashboard() {
   const ordersSparkline = useMemo(() => {
     return (overviewFilteredData?.trend || []).map(m => m.orders);
   }, [overviewFilteredData]);
+
+// ==================== REVENUE TREND SLICING SLIDER ====================
+  const fullTrendData = overviewFilteredData?.trend || [];
+  const [sliceStartIndex, setSliceStartIndex] = useState(0);
+  const [sliceEndIndex, setSliceEndIndex] = useState(Math.max(0, (fullTrendData.length || 6) - 1));
+
+  // Sync slice range when timeframe or category changes
+  useEffect(() => {
+    if (fullTrendData.length > 0) {
+      setSliceStartIndex(0);
+      setSliceEndIndex(fullTrendData.length - 1);
+    }
+  }, [fullTrendData.length, timeframe, overviewCategory]);
+
+  // Sliced trend data passed to the AreaChart
+  const displayedTrendData = useMemo(() => {
+    if (!fullTrendData.length) return [];
+    const start = Math.max(0, Math.min(sliceStartIndex, fullTrendData.length - 1));
+    const end = Math.max(start, Math.min(sliceEndIndex, fullTrendData.length - 1));
+    return fullTrendData.slice(start, end + 1);
+  }, [fullTrendData, sliceStartIndex, sliceEndIndex]);
+
+  // Dynamic window stats for the sliced interval
+  const slicedWindowStats = useMemo(() => {
+    if (!displayedTrendData.length) return { revenue: 0, profit: 0, margin: 0, peakMonth: 'N/A' };
+    const totalRev = displayedTrendData.reduce((acc, curr) => acc + (curr.revenue || 0), 0);
+    const totalProf = displayedTrendData.reduce((acc, curr) => acc + (curr.profit || 0), 0);
+    const margin = totalRev > 0 ? Math.round((totalProf / totalRev) * 100) : 0;
+    let peak = displayedTrendData[0];
+    displayedTrendData.forEach(d => {
+      if ((d.revenue || 0) > (peak.revenue || 0)) peak = d;
+    });
+    return {
+      revenue: totalRev,
+      profit: totalProf,
+      margin,
+      peakMonth: `${peak?.month || 'N/A'} (₹${(peak?.revenue || 0).toLocaleString()})`
+    };
+  }, [displayedTrendData]);
 
   const CATEGORY_COLORS = ['#123E30', '#C6A45B', '#C4713B', '#3b82f6', '#8b5cf6', '#10b981'];
 
@@ -1652,17 +1652,7 @@ export default function AdminDashboard() {
                         />
                         <Area type="monotone" dataKey="revenue" name="Revenue" stroke={isDark ? "#C6A45B" : "#123E30"} strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
                         <Area type="monotone" dataKey="profit" name="Profit" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorProf)" />
-                        {fullTrendData.length > 2 && (
-                          <Brush
-                            dataKey="month"
-                            height={26}
-                            stroke={isDark ? "#C6A45B" : "#123E30"}
-                            fill={isDark ? "#1c1917" : "#fdfbf7"}
-                            travellerWidth={10}
-                            startIndex={Math.min(sliceStartIndex, Math.max(0, displayedTrendData.length - 1))}
-                            endIndex={Math.min(sliceEndIndex, Math.max(0, displayedTrendData.length - 1))}
-                          />
-                        )}
+                        
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>
