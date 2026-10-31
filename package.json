@@ -1,0 +1,23 @@
+{
+  "name": "veera-naturals",
+  "version": "1.0.0",
+  "description": "Veera Naturals — Full-Stack MERN E-Commerce & Interactive Admin BI Dashboard",
+  "scripts": {
+    "start": "node server/server.js",
+    "server": "node server/server.js",
+    "client": "cd client && npm run dev",
+    "build": "cd client && npm run build",
+    "seed": "node server/seed/seedData.js"
+  },
+  "keywords": [
+    "veera-naturals",
+    "mern",
+    "ecommerce",
+    "ayurveda",
+    "bi-dashboard",
+    "react",
+    "node"
+  ],
+  "author": "Veera Naturals Team",
+  "license": "ISC"
+}
