@@ -16,6 +16,7 @@ import {
   PieChart, Pie, Cell, BarChart, Bar, Legend, CartesianGrid, LineChart, Line
 } from 'recharts';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 
 // ============ UTILITY: Animated Counter Hook ============
 function useCountUp(target, duration = 1200) {
@@ -97,6 +98,7 @@ function HealthRing({ score = 92, size = 64, strokeWidth = 5 }) {
 
 export default function AdminDashboard() {
   const { user, isAdmin, logout } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const clock = useRealTimeClock();
 
@@ -108,8 +110,9 @@ export default function AdminDashboard() {
   const [toast, setToast] = useState(null);
   const [showNotifications, setShowNotifications] = useState(false);
 
-  // Timeframe
+  // Timeframe & Overview Filter
   const [timeframe, setTimeframe] = useState('all');
+  const [overviewCategory, setOverviewCategory] = useState('all');
 
   // Management data
   const [productsList, setProductsList] = useState([]);
@@ -130,18 +133,27 @@ export default function AdminDashboard() {
   // Filters & search
   const [productSearch, setProductSearch] = useState('');
   const [productCategoryFilter, setProductCategoryFilter] = useState('all');
+  const [productStockStatus, setProductStockStatus] = useState('all'); // all, in-stock, low-stock, out-of-stock, healthy
+  const [productSortBy, setProductSortBy] = useState('featured'); // featured, price-low, price-high, stock-low, stock-high, name
   const [lowStockOnly, setLowStockOnly] = useState(false);
+
   const [orderSearch, setOrderSearch] = useState('');
   const [orderStatusFilter, setOrderStatusFilter] = useState('all');
+  const [orderPaymentFilter, setOrderPaymentFilter] = useState('all'); // all, cod, prepaid
+  const [orderDateFilter, setOrderDateFilter] = useState('all'); // all, today, 7d, 30d
   const [userSearch, setUserSearch] = useState('');
 
-  // Modals
+  // Modals & Drill-Downs
   const [showProductModal, setShowProductModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [productForm, setProductForm] = useState({
     name: '', category: 'Hair Care', price: '', mrp: '', costPrice: '', stock: 50, volume: '100 ml', description: '', tags: 'bestseller, organic'
   });
   const [selectedOrderDetails, setSelectedOrderDetails] = useState(null);
+  const [selectedProductDrillDown, setSelectedProductDrillDown] = useState(null);
+  const [selectedCustomerDetails, setSelectedCustomerDetails] = useState(null);
+  const [trackingNumberInput, setTrackingNumberInput] = useState('');
+  const [trackingCarrierInput, setTrackingCarrierInput] = useState('Blue Dart');
 
   // New coupon form
   const [newCouponCode, setNewCouponCode] = useState('');
@@ -333,26 +345,188 @@ export default function AdminDashboard() {
     } catch (err) { alert('Failed to save settings'); }
   };
 
-  // ==================== FILTERED LISTS ====================
-  const filteredProducts = useMemo(() => productsList.filter(p => {
-    const matchesSearch = p.name.toLowerCase().includes(productSearch.toLowerCase()) || (p.sku && p.sku.toLowerCase().includes(productSearch.toLowerCase()));
-    const matchesCategory = productCategoryFilter === 'all' || p.category.toLowerCase() === productCategoryFilter.toLowerCase();
-    const matchesLowStock = !lowStockOnly || p.stock <= (p.lowStockThreshold || 10);
-    return matchesSearch && matchesCategory && matchesLowStock;
-  }), [productsList, productSearch, productCategoryFilter, lowStockOnly]);
+  // ==================== INVOICE & TRACKING ACTIONS ====================
+  const handlePrintInvoice = (order) => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) { showNotification('Please allow popups to print invoices'); return; }
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Invoice - ${order.orderNumber || order.id}</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 40px; color: #1c1917; background: #fff; }
+            .header { display: flex; justify-content: space-between; border-bottom: 2px solid #123E30; padding-bottom: 20px; }
+            .logo { font-size: 24px; font-weight: bold; color: #123E30; }
+            .invoice-title { font-size: 20px; color: #C6A45B; text-align: right; font-weight: bold; }
+            .details { display: flex; justify-content: space-between; margin: 30px 0; font-size: 13px; line-height: 1.6; }
+            table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px; }
+            th { background: #f6f0e5; text-align: left; padding: 10px; border-bottom: 1px solid #ddd; color: #123E30; }
+            td { padding: 10px; border-bottom: 1px solid #eee; }
+            .totals { margin-left: auto; width: 300px; font-size: 14px; margin-top: 20px; }
+            .totals-row { display: flex; justify-content: space-between; padding: 6px 0; }
+            .totals-row.grand { font-size: 16px; font-weight: bold; border-top: 2px solid #123E30; color: #123E30; padding-top: 10px; }
+            .footer { margin-top: 60px; text-align: center; font-size: 11px; color: #78716c; border-top: 1px solid #eee; padding-top: 20px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div>
+              <div class="logo">🌿 Veera Naturals</div>
+              <div style="font-size: 12px; color: #78716c; margin-top: 4px;">Sacred Ayurvedic Care & Cold-Pressed Botanicals</div>
+            </div>
+            <div class="invoice-title">
+              TAX INVOICE<br>
+              <span style="font-size: 13px; color: #78716c; font-weight: normal;">#${order.orderNumber || order.id?.slice(-8)}</span>
+            </div>
+          </div>
+          <div class="details">
+            <div>
+              <strong>Billed & Shipped To:</strong><br>
+              ${order.userName || 'Valued Customer'}<br>
+              ${order.userEmail || ''}<br>
+              ${order.shippingAddress ? `${order.shippingAddress.street || ''}, ${order.shippingAddress.city || ''}, ${order.shippingAddress.state || ''} - ${order.shippingAddress.postalCode || ''}` : 'Standard Delivery'}<br>
+              Phone: ${order.shippingAddress?.phone || 'On file'}
+            </div>
+            <div style="text-align: right;">
+              <strong>Order Date:</strong> ${new Date(order.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}<br>
+              <strong>Payment Method:</strong> ${order.paymentMethod || 'Prepaid'}<br>
+              <strong>Payment Status:</strong> ${order.paymentStatus || 'Paid'}<br>
+              <strong>Fulfillment:</strong> ${order.fulfillmentStatus?.toUpperCase()}
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Item Description</th>
+                <th style="text-align: right;">Unit Price</th>
+                <th style="text-align: center;">Qty</th>
+                <th style="text-align: right;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${(order.items || []).map(item => `
+                <tr>
+                  <td>${item.name}</td>
+                  <td style="text-align: right;">₹${item.price}</td>
+                  <td style="text-align: center;">${item.quantity}</td>
+                  <td style="text-align: right;">₹${item.price * item.quantity}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          <div class="totals">
+            <div class="totals-row"><span>Subtotal:</span><span>₹${order.totalAmount}</span></div>
+            <div class="totals-row"><span>Shipping:</span><span>FREE</span></div>
+            <div class="totals-row"><span>GST (Included 5%):</span><span>₹${Math.round(order.totalAmount * 0.05)}</span></div>
+            <div class="totals-row grand"><span>Total Amount:</span><span>₹${order.totalAmount}</span></div>
+          </div>
+          <div class="footer">
+            Thank you for choosing Veera Naturals • 100% Pure Plant Formulations • care@veeranaturals.com
+          </div>
+          <script>window.onload = function() { window.print(); };</script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
 
-  const filteredOrders = useMemo(() => ordersList.filter(o => {
-    const matchesSearch = (o.orderNumber && o.orderNumber.toLowerCase().includes(orderSearch.toLowerCase())) ||
-      (o.userName && o.userName.toLowerCase().includes(orderSearch.toLowerCase())) ||
-      (o.userEmail && o.userEmail.toLowerCase().includes(orderSearch.toLowerCase()));
-    const matchesStatus = orderStatusFilter === 'all' || o.fulfillmentStatus === orderStatusFilter;
-    return matchesSearch && matchesStatus;
-  }), [ordersList, orderSearch, orderStatusFilter]);
+  const handleSaveTracking = async (orderId) => {
+    if (!trackingNumberInput) { showNotification('Please enter a tracking number'); return; }
+    try {
+      showNotification(`Tracking # ${trackingNumberInput} (${trackingCarrierInput}) saved for order`);
+      if (selectedOrderDetails && selectedOrderDetails.id === orderId) {
+        setSelectedOrderDetails(prev => ({
+          ...prev,
+          trackingNumber: trackingNumberInput,
+          carrier: trackingCarrierInput,
+          fulfillmentStatus: prev.fulfillmentStatus === 'pending' ? 'shipped' : prev.fulfillmentStatus
+        }));
+      }
+      setTrackingNumberInput('');
+    } catch (err) { alert('Failed to update tracking'); }
+  };
+
+  // ==================== FILTERED LISTS ====================
+  const filteredProducts = useMemo(() => {
+    let list = productsList.filter(p => {
+      const matchesSearch = p.name.toLowerCase().includes(productSearch.toLowerCase()) || (p.sku && p.sku.toLowerCase().includes(productSearch.toLowerCase()));
+      const matchesCategory = productCategoryFilter === 'all' || p.category.toLowerCase() === productCategoryFilter.toLowerCase();
+      
+      let matchesStock = true;
+      if (productStockStatus === 'low-stock' || lowStockOnly) {
+        matchesStock = p.stock > 0 && p.stock <= (p.lowStockThreshold || 10);
+      } else if (productStockStatus === 'out-of-stock') {
+        matchesStock = p.stock === 0;
+      } else if (productStockStatus === 'in-stock') {
+        matchesStock = p.stock > 0;
+      } else if (productStockStatus === 'healthy') {
+        matchesStock = p.stock > 20;
+      }
+
+      return matchesSearch && matchesCategory && matchesStock;
+    });
+
+    if (productSortBy === 'price-low') {
+      list.sort((a, b) => a.price - b.price);
+    } else if (productSortBy === 'price-high') {
+      list.sort((a, b) => b.price - a.price);
+    } else if (productSortBy === 'stock-low') {
+      list.sort((a, b) => a.stock - b.stock);
+    } else if (productSortBy === 'stock-high') {
+      list.sort((a, b) => b.stock - a.stock);
+    } else if (productSortBy === 'name') {
+      list.sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    return list;
+  }, [productsList, productSearch, productCategoryFilter, productStockStatus, lowStockOnly, productSortBy]);
+
+  const filteredOrders = useMemo(() => {
+    const now = new Date();
+    return ordersList.filter(o => {
+      const matchesSearch = (o.orderNumber && o.orderNumber.toLowerCase().includes(orderSearch.toLowerCase())) ||
+        (o.userName && o.userName.toLowerCase().includes(orderSearch.toLowerCase())) ||
+        (o.userEmail && o.userEmail.toLowerCase().includes(orderSearch.toLowerCase()));
+      
+      const matchesStatus = orderStatusFilter === 'all' || o.fulfillmentStatus === orderStatusFilter;
+      
+      let matchesPayment = true;
+      if (orderPaymentFilter === 'cod') {
+        matchesPayment = (o.paymentMethod || '').toLowerCase().includes('cod') || (o.paymentMethod || '').toLowerCase().includes('cash');
+      } else if (orderPaymentFilter === 'prepaid') {
+        matchesPayment = !(o.paymentMethod || '').toLowerCase().includes('cod') && !(o.paymentMethod || '').toLowerCase().includes('cash');
+      }
+
+      let matchesDate = true;
+      if (orderDateFilter !== 'all' && o.createdAt) {
+        const orderDate = new Date(o.createdAt);
+        const diffHours = (now - orderDate) / (1000 * 60 * 60);
+        if (orderDateFilter === 'today') matchesDate = diffHours <= 24;
+        else if (orderDateFilter === '7d') matchesDate = diffHours <= 24 * 7;
+        else if (orderDateFilter === '30d') matchesDate = diffHours <= 24 * 30;
+      }
+
+      return matchesSearch && matchesStatus && matchesPayment && matchesDate;
+    });
+  }, [ordersList, orderSearch, orderStatusFilter, orderPaymentFilter, orderDateFilter]);
 
   const filteredUsers = useMemo(() => usersList.filter(u =>
     u.name.toLowerCase().includes(userSearch.toLowerCase()) ||
     u.email.toLowerCase().includes(userSearch.toLowerCase())
   ), [usersList, userSearch]);
+
+  const displayedTopProducts = useMemo(() => {
+    if (!data?.topProducts) return [];
+    if (overviewCategory === 'all') return data.topProducts;
+    return data.topProducts.filter(p => {
+      const fullProd = productsList.find(x => x.name?.toLowerCase() === p.name?.toLowerCase() || x.id === p.id);
+      return fullProd ? fullProd.category?.toLowerCase() === overviewCategory.toLowerCase() : true;
+    });
+  }, [data, overviewCategory, productsList]);
+
+  const outOfStockCount = useMemo(() => productsList.filter(p => p.stock === 0).length, [productsList]);
+  const healthyStockCount = useMemo(() => productsList.filter(p => p.stock > 20).length, [productsList]);
 
   // ==================== COMPUTED METRICS ====================
   const pendingOrdersCount = ordersList.filter(o => o.fulfillmentStatus === 'pending').length;
@@ -400,7 +574,11 @@ export default function AdminDashboard() {
 
   // ==================== RENDER ====================
   return (
-    <div className="min-h-screen bg-stone-950 text-stone-100 flex font-sans selection:bg-gold-500 selection:text-stone-950 admin-scroll">
+    <div className={`min-h-screen flex font-sans admin-scroll transition-colors duration-300 ${
+      isDark
+        ? 'bg-stone-950 text-stone-100 selection:bg-gold-500 selection:text-stone-950'
+        : 'bg-[#FAF7F2] text-stone-900 selection:bg-forest-900 selection:text-gold-300'
+    }`}>
 
       {/* ========== TOAST NOTIFICATION ========== */}
       {toast && (
@@ -413,16 +591,20 @@ export default function AdminDashboard() {
       )}
 
       {/* ========== SIDEBAR ========== */}
-      <aside className={`glass-sidebar fixed left-0 top-0 h-full z-50 flex flex-col transition-all duration-300 ease-in-out border-r border-stone-800/60 ${sidebarCollapsed ? 'w-[72px]' : 'w-64'}`}>
+      <aside className={`glass-sidebar fixed left-0 top-0 h-full z-50 flex flex-col transition-all duration-300 ease-in-out border-r ${
+        isDark ? 'border-stone-800/60' : 'border-stone-200/90 shadow-sm'
+      } ${sidebarCollapsed ? 'w-[72px]' : 'w-64'}`}>
         
         {/* Sidebar Header */}
-        <div className={`flex items-center gap-3 px-4 py-5 border-b border-stone-800/60 ${sidebarCollapsed ? 'justify-center' : ''}`}>
+        <div className={`flex items-center gap-3 px-4 py-5 border-b ${
+          isDark ? 'border-stone-800/60' : 'border-stone-200/90'
+        } ${sidebarCollapsed ? 'justify-center' : ''}`}>
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-forest-950 to-forest-900 border border-gold-500/40 flex items-center justify-center flex-shrink-0 shadow-md p-1">
             <img src="/images/logo-emblem.png" alt="Veera Naturals" className="h-7 w-7 object-contain drop-shadow" onError={(e) => { e.target.src = '/marketing/image3.png'; }} />
           </div>
           {!sidebarCollapsed && (
             <div className="animate-fade-in">
-              <h1 className="font-serif text-sm font-bold text-gold-400 leading-tight">Veera Naturals</h1>
+              <h1 className={`font-serif text-sm font-bold leading-tight ${isDark ? 'text-gold-400' : 'text-forest-950'}`}>Veera Naturals</h1>
               <span className="text-[10px] text-stone-500 uppercase tracking-widest font-semibold">Admin Console</span>
             </div>
           )}
@@ -440,16 +622,26 @@ export default function AdminDashboard() {
                 title={sidebarCollapsed ? item.label : ''}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-200 group relative ${
                   isActive
-                    ? 'bg-gradient-to-r from-gold-500/20 to-gold-500/5 text-gold-400 border border-gold-500/20 shadow-lg shadow-gold-500/5'
-                    : 'text-stone-400 hover:text-stone-200 hover:bg-stone-800/60'
+                    ? (isDark
+                        ? 'bg-gradient-to-r from-gold-500/20 to-gold-500/5 text-gold-400 border border-gold-500/20 shadow-lg shadow-gold-500/5'
+                        : 'bg-forest-900 text-gold-300 border border-forest-800 shadow-md')
+                    : (isDark
+                        ? 'text-stone-400 hover:text-stone-200 hover:bg-stone-800/60'
+                        : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100')
                 } ${sidebarCollapsed ? 'justify-center' : ''}`}
               >
-                {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-gold-500 rounded-r-full" />}
-                <Icon className={`w-[18px] h-[18px] flex-shrink-0 ${isActive ? 'text-gold-400' : 'text-stone-500 group-hover:text-stone-300'}`} />
+                {isActive && <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full ${isDark ? 'bg-gold-500' : 'bg-gold-400'}`} />}
+                <Icon className={`w-[18px] h-[18px] flex-shrink-0 ${
+                  isActive
+                    ? (isDark ? 'text-gold-400' : 'text-gold-300')
+                    : (isDark ? 'text-stone-500 group-hover:text-stone-300' : 'text-stone-500 group-hover:text-forest-900')
+                }`} />
                 {!sidebarCollapsed && <span>{item.label}</span>}
                 {!sidebarCollapsed && item.badge !== null && item.badge > 0 && (
                   <span className={`ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                    isActive ? 'bg-gold-500/20 text-gold-400' : 'bg-stone-800 text-stone-400'
+                    isActive
+                      ? (isDark ? 'bg-gold-500/20 text-gold-400' : 'bg-gold-400/20 text-gold-300')
+                      : (isDark ? 'bg-stone-800 text-stone-400' : 'bg-stone-200 text-stone-700')
                   }`}>{item.badge}</span>
                 )}
               </button>
@@ -458,14 +650,18 @@ export default function AdminDashboard() {
         </nav>
 
         {/* Sidebar Footer */}
-        <div className={`px-3 py-4 border-t border-stone-800/60 space-y-2 ${sidebarCollapsed ? 'px-2' : ''}`}>
+        <div className={`px-3 py-4 border-t space-y-2 ${
+          isDark ? 'border-stone-800/60' : 'border-stone-200/90'
+        } ${sidebarCollapsed ? 'px-2' : ''}`}>
           {/* Store Health */}
           {!sidebarCollapsed && (
-            <div className="flex items-center gap-3 p-3 bg-stone-900/60 rounded-xl border border-stone-800/40 animate-fade-in">
+            <div className={`flex items-center gap-3 p-3 rounded-xl border animate-fade-in ${
+              isDark ? 'bg-stone-900/60 border-stone-800/40 text-stone-200' : 'bg-stone-50 border-stone-200 text-stone-800'
+            }`}>
               <HealthRing score={storeHealthScore} size={40} strokeWidth={4} />
               <div>
                 <span className="text-[10px] uppercase tracking-wider text-stone-500 font-bold">Store Health</span>
-                <p className="text-xs font-bold text-stone-200">{storeHealthScore >= 80 ? 'Excellent' : storeHealthScore >= 50 ? 'Needs Attention' : 'Critical'}</p>
+                <p className={`text-xs font-bold ${isDark ? 'text-stone-200' : 'text-stone-900'}`}>{storeHealthScore >= 80 ? 'Excellent' : storeHealthScore >= 50 ? 'Needs Attention' : 'Critical'}</p>
               </div>
             </div>
           )}
@@ -473,7 +669,9 @@ export default function AdminDashboard() {
           {/* Collapse Toggle */}
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="w-full flex items-center justify-center gap-2 py-2 text-stone-500 hover:text-gold-400 transition-colors rounded-lg hover:bg-stone-800/40 text-xs"
+            className={`w-full flex items-center justify-center gap-2 py-2 transition-colors rounded-lg text-xs ${
+              isDark ? 'text-stone-500 hover:text-gold-400 hover:bg-stone-800/40' : 'text-stone-600 hover:text-forest-900 hover:bg-stone-100'
+            }`}
           >
             {sidebarCollapsed ? <ChevronsRight className="w-4 h-4" /> : <><ChevronsLeft className="w-4 h-4" /><span>Collapse</span></>}
           </button>
@@ -484,18 +682,20 @@ export default function AdminDashboard() {
       <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarCollapsed ? 'ml-[72px]' : 'ml-64'}`}>
         
         {/* Top Header Bar */}
-        <header className="sticky top-0 z-40 bg-stone-950/80 backdrop-blur-xl border-b border-stone-800/50 px-6 py-3">
+        <header className={`sticky top-0 z-40 backdrop-blur-xl border-b px-6 py-3 transition-colors ${
+          isDark ? 'bg-stone-950/85 border-stone-800/50 text-stone-100' : 'bg-white/95 border-stone-200/90 text-stone-900 shadow-sm'
+        }`}>
           <div className="flex items-center justify-between">
             {/* Left: Page Title & Breadcrumb */}
             <div className="flex items-center gap-4">
               <div>
-                <h2 className="font-serif text-lg font-bold text-stone-100">
+                <h2 className={`font-serif text-lg font-bold ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>
                   {sidebarItems.find(i => i.id === activeTab)?.label || 'Dashboard'}
                 </h2>
                 <div className="flex items-center gap-2 text-[11px] text-stone-500">
                   <span>Admin</span>
                   <ChevronRight className="w-3 h-3" />
-                  <span className="text-gold-400">{sidebarItems.find(i => i.id === activeTab)?.label}</span>
+                  <span className={isDark ? 'text-gold-400' : 'text-forest-900 font-bold'}>{sidebarItems.find(i => i.id === activeTab)?.label}</span>
                 </div>
               </div>
             </div>
@@ -503,23 +703,54 @@ export default function AdminDashboard() {
             {/* Right: Actions */}
             <div className="flex items-center gap-3">
               {/* Live Status */}
-              <div className="hidden md:flex items-center gap-2 bg-stone-900/80 px-3 py-1.5 rounded-xl border border-stone-800 text-[11px]">
+              <div className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[11px] ${
+                isDark ? 'bg-stone-900/80 border-stone-800 text-stone-400' : 'bg-stone-100 border-stone-200 text-stone-700'
+              }`}>
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 <Database className="w-3 h-3 text-emerald-400" />
-                <span className="text-stone-400">Database: <strong className="text-emerald-400">Live</strong></span>
+                <span>Database: <strong className="text-emerald-500">Live</strong></span>
               </div>
 
               {/* Clock */}
-              <div className="hidden lg:flex items-center gap-1.5 text-[11px] text-stone-400 bg-stone-900/60 px-3 py-1.5 rounded-xl border border-stone-800">
-                <Clock className="w-3 h-3 text-gold-400" />
+              <div className={`hidden lg:flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-xl border ${
+                isDark ? 'bg-stone-900/60 border-stone-800 text-stone-400' : 'bg-stone-100 border-stone-200 text-stone-700'
+              }`}>
+                <Clock className={`w-3 h-3 ${isDark ? 'text-gold-400' : 'text-forest-800'}`} />
                 <span>{clock.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
               </div>
+
+              {/* Theme Switcher Toggle */}
+              <button
+                onClick={toggleTheme}
+                title={isDark ? "Switch to Light Theme" : "Switch to Dark Theme"}
+                className={`p-2 rounded-xl border flex items-center gap-1.5 text-xs font-bold transition-all shadow-sm ${
+                  isDark
+                    ? 'bg-stone-900/80 hover:bg-stone-800 text-gold-400 border-stone-800 hover:border-gold-500/40'
+                    : 'bg-stone-100 hover:bg-stone-200 text-forest-900 border-stone-200 hover:border-forest-600'
+                }`}
+              >
+                {isDark ? (
+                  <>
+                    <Sun className="w-4 h-4 text-amber-400" />
+                    <span className="hidden sm:inline">Light</span>
+                  </>
+                ) : (
+                  <>
+                    <Moon className="w-4 h-4 text-forest-900" />
+                    <span className="hidden sm:inline">Dark</span>
+                  </>
+                )}
+              </button>
 
               {/* Notifications */}
               <div className="relative">
                 <button
                   onClick={() => setShowNotifications(!showNotifications)}
-                  className={`relative p-2 rounded-xl transition-colors border ${totalNotifications > 0 ? 'bg-amber-950/30 border-amber-800/50 text-amber-400' : 'bg-stone-900/60 border-stone-800 text-stone-400 hover:text-stone-200'}`}
+                  className={`relative p-2 rounded-xl transition-colors border ${
+                    totalNotifications > 0
+                      ? 'bg-amber-950/30 border-amber-800/50 text-amber-400'
+                      : (isDark ? 'bg-stone-900/60 border-stone-800 text-stone-400 hover:text-stone-200' : 'bg-stone-100 border-stone-200 text-stone-600 hover:text-stone-900')
+                  }`}
                 >
                   <Bell className="w-4 h-4" />
                   {totalNotifications > 0 && (
@@ -529,17 +760,19 @@ export default function AdminDashboard() {
                   )}
                 </button>
                 {showNotifications && (
-                  <div className="absolute right-0 mt-2 w-80 bg-stone-900 border border-stone-700 rounded-2xl shadow-2xl p-4 space-y-3 z-50 animate-fade-in-scale">
+                  <div className={`absolute right-0 mt-2 w-80 border rounded-2xl shadow-2xl p-4 space-y-3 z-50 animate-fade-in-scale ${
+                    isDark ? 'bg-stone-900 border-stone-700 text-stone-100' : 'bg-white border-stone-200 text-stone-900 shadow-xl'
+                  }`}>
                     <div className="flex items-center justify-between">
-                      <h4 className="font-bold text-sm text-stone-100">Notifications</h4>
+                      <h4 className="font-bold text-sm">Notifications</h4>
                       <button onClick={() => setShowNotifications(false)}><X className="w-4 h-4 text-stone-500" /></button>
                     </div>
                     {pendingOrdersCount > 0 && (
                       <div className="flex items-start gap-3 p-3 bg-amber-950/20 rounded-xl border border-amber-800/30">
                         <ShoppingCart className="w-4 h-4 text-amber-400 mt-0.5" />
                         <div>
-                          <p className="text-xs font-bold text-stone-200">{pendingOrdersCount} Pending Orders</p>
-                          <p className="text-[11px] text-stone-400">Orders awaiting fulfillment</p>
+                          <p className={`text-xs font-bold ${isDark ? 'text-stone-200' : 'text-stone-800'}`}>{pendingOrdersCount} Pending Orders</p>
+                          <p className="text-[11px] text-stone-500">Orders awaiting fulfillment</p>
                         </div>
                       </div>
                     )}
@@ -547,8 +780,8 @@ export default function AdminDashboard() {
                       <div className="flex items-start gap-3 p-3 bg-red-950/20 rounded-xl border border-red-800/30">
                         <AlertTriangle className="w-4 h-4 text-red-400 mt-0.5" />
                         <div>
-                          <p className="text-xs font-bold text-stone-200">{lowStockCount} Low Stock Items</p>
-                          <p className="text-[11px] text-stone-400">Products below reorder threshold</p>
+                          <p className={`text-xs font-bold ${isDark ? 'text-stone-200' : 'text-stone-800'}`}>{lowStockCount} Low Stock Items</p>
+                          <p className="text-[11px] text-stone-500">Products below reorder threshold</p>
                         </div>
                       </div>
                     )}
@@ -561,33 +794,43 @@ export default function AdminDashboard() {
 
               {/* Export Dropdown */}
               <div className="relative group">
-                <button className="flex items-center gap-1.5 bg-stone-900/60 hover:bg-stone-800 text-stone-300 text-[11px] font-semibold px-3 py-2 rounded-xl border border-stone-800 transition-colors">
-                  <Download className="w-3.5 h-3.5 text-gold-400" />
+                <button className={`flex items-center gap-1.5 text-[11px] font-semibold px-3 py-2 rounded-xl border transition-colors ${
+                  isDark ? 'bg-stone-900/60 hover:bg-stone-800 text-stone-300 border-stone-800' : 'bg-stone-100 hover:bg-stone-200 text-stone-700 border-stone-200'
+                }`}>
+                  <Download className={`w-3.5 h-3.5 ${isDark ? 'text-gold-400' : 'text-forest-900'}`} />
                   <span className="hidden sm:inline">Export</span>
                 </button>
-                <div className="absolute right-0 mt-1 w-48 bg-stone-900 border border-stone-700 rounded-xl shadow-2xl py-1 hidden group-hover:block z-50">
-                  <button onClick={handleExportOrdersCSV} className="w-full text-left px-3.5 py-2 text-xs text-stone-300 hover:bg-stone-800 hover:text-gold-400 flex items-center gap-2">
+                <div className={`absolute right-0 mt-1 w-48 border rounded-xl shadow-2xl py-1 hidden group-hover:block z-50 ${
+                  isDark ? 'bg-stone-900 border-stone-700 text-stone-300' : 'bg-white border-stone-200 text-stone-700 shadow-xl'
+                }`}>
+                  <button onClick={handleExportOrdersCSV} className={`w-full text-left px-3.5 py-2 text-xs flex items-center gap-2 ${
+                    isDark ? 'text-stone-300 hover:bg-stone-800 hover:text-gold-400' : 'text-stone-700 hover:bg-stone-100 hover:text-forest-950'
+                  }`}>
                     <FileText className="w-3.5 h-3.5" /> Export Orders (CSV)
                   </button>
-                  <button onClick={handleExportProductsCSV} className="w-full text-left px-3.5 py-2 text-xs text-stone-300 hover:bg-stone-800 hover:text-gold-400 flex items-center gap-2">
+                  <button onClick={handleExportProductsCSV} className={`w-full text-left px-3.5 py-2 text-xs flex items-center gap-2 ${
+                    isDark ? 'text-stone-300 hover:bg-stone-800 hover:text-gold-400' : 'text-stone-700 hover:bg-stone-100 hover:text-forest-950'
+                  }`}>
                     <Package className="w-3.5 h-3.5" /> Export Inventory (CSV)
                   </button>
                 </div>
               </div>
 
               {/* Refresh */}
-              <button onClick={fetchDashboardStats} className="p-2 bg-stone-900/60 hover:bg-stone-800 rounded-xl border border-stone-800 text-stone-400 hover:text-gold-400 transition-colors">
-                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-gold-400' : ''}`} />
+              <button onClick={fetchDashboardStats} className={`p-2 rounded-xl border transition-colors ${
+                isDark ? 'bg-stone-900/60 hover:bg-stone-800 border-stone-800 text-stone-400 hover:text-gold-400' : 'bg-stone-100 hover:bg-stone-200 border-stone-200 text-stone-600 hover:text-forest-900'
+              }`}>
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-gold-500' : ''}`} />
               </button>
 
               {/* Admin Avatar */}
-              <div className="flex items-center gap-2 pl-3 border-l border-stone-800">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-gold-500 to-gold-700 flex items-center justify-center text-stone-950 font-bold text-xs">
+              <div className={`flex items-center gap-2 pl-3 border-l ${isDark ? 'border-stone-800' : 'border-stone-200'}`}>
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-gold-500 to-gold-700 flex items-center justify-center text-stone-950 font-bold text-xs shadow-sm">
                   {(user?.name || 'A').charAt(0).toUpperCase()}
                 </div>
                 {!sidebarCollapsed && (
                   <div className="hidden md:block">
-                    <p className="text-xs font-bold text-stone-200 leading-tight">{user?.name || 'Admin'}</p>
+                    <p className={`text-xs font-bold leading-tight ${isDark ? 'text-stone-200' : 'text-stone-900'}`}>{user?.name || 'Admin'}</p>
                     <p className="text-[10px] text-gold-500 font-semibold">Administrator</p>
                   </div>
                 )}
@@ -620,19 +863,50 @@ export default function AdminDashboard() {
           {activeTab === 'analytics' && data && (
             <div className="space-y-6 animate-fade-in">
 
-              {/* Timeframe Filter */}
-              <div className="flex items-center gap-2 bg-stone-900/40 p-1 rounded-xl border border-stone-800/60 text-xs w-fit">
-                {['7days', '30days', 'quarter', 'all'].map(t => (
-                  <button
-                    key={t}
-                    onClick={() => setTimeframe(t)}
-                    className={`px-3.5 py-1.5 rounded-lg font-bold capitalize transition-all duration-200 ${
-                      timeframe === t ? 'bg-gold-500 text-stone-950 shadow-md' : 'text-stone-400 hover:text-stone-200 hover:bg-stone-800/40'
-                    }`}
-                  >
-                    {t === '7days' ? 'Last 7D' : t === '30days' ? 'Last 30D' : t === 'quarter' ? 'Quarter' : 'All Time'}
-                  </button>
-                ))}
+              {/* Filter Controls Bar */}
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                {/* Timeframe Filter */}
+                <div className={`flex items-center gap-1.5 p-1 rounded-xl border text-xs ${
+                  isDark ? 'bg-stone-900/60 border-stone-800/60' : 'bg-white border-stone-200 shadow-xs'
+                }`}>
+                  {['7days', '30days', 'quarter', 'all'].map(t => (
+                    <button
+                      key={t}
+                      onClick={() => setTimeframe(t)}
+                      className={`px-3 py-1.5 rounded-lg font-bold capitalize transition-all duration-200 ${
+                        timeframe === t
+                          ? (isDark ? 'bg-gold-500 text-stone-950 shadow-md' : 'bg-forest-900 text-gold-300 shadow-sm')
+                          : (isDark ? 'text-stone-400 hover:text-stone-200 hover:bg-stone-800/40' : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100')
+                      }`}
+                    >
+                      {t === '7days' ? 'Last 7D' : t === '30days' ? 'Last 30D' : t === 'quarter' ? 'Quarter' : 'All Time'}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Category Filter Component */}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className={`text-[11px] font-bold ${isDark ? 'text-stone-400' : 'text-stone-600'} flex items-center gap-1 mr-1`}>
+                    <Filter className="w-3.5 h-3.5" /> Category:
+                  </span>
+                  {['all', 'Hair Care', 'Skin Care', 'Body Care', 'Essential Oils'].map(cat => (
+                    <button
+                      key={cat}
+                      onClick={() => setOverviewCategory(cat)}
+                      className={`text-xs font-bold px-3 py-1.5 rounded-xl border transition-all ${
+                        overviewCategory === cat
+                          ? (isDark
+                              ? 'bg-gold-500 text-stone-950 border-gold-400 shadow-sm'
+                              : 'bg-forest-900 text-gold-300 border-forest-900 shadow-sm')
+                          : (isDark
+                              ? 'bg-stone-900/60 text-stone-400 border-stone-800 hover:text-stone-200'
+                              : 'bg-white text-stone-600 border-stone-200 hover:text-stone-900 shadow-xs')
+                      }`}
+                    >
+                      {cat === 'all' ? 'All Categories' : cat}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* KPI Cards Grid — Premium Animated */}
@@ -885,29 +1159,49 @@ export default function AdminDashboard() {
                 <div className="glass-card p-6 rounded-2xl space-y-4 animate-fade-in">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-serif font-bold text-base text-stone-100">Top Sellers</h3>
-                      <p className="text-[11px] text-stone-500">Best performing formulations</p>
+                      <h3 className={`font-serif font-bold text-base ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>
+                        Top Sellers {overviewCategory !== 'all' ? `• ${overviewCategory}` : ''}
+                      </h3>
+                      <p className="text-[11px] text-stone-500">Click any product to drill down into metrics</p>
                     </div>
-                    <button onClick={() => setActiveTab('products')} className="text-[11px] font-bold text-gold-400 hover:underline flex items-center gap-1">
+                    <button onClick={() => setActiveTab('products')} className={`text-[11px] font-bold flex items-center gap-1 ${isDark ? 'text-gold-400 hover:underline' : 'text-forest-900 hover:underline'}`}>
                       View All <ArrowRight className="w-3 h-3" />
                     </button>
                   </div>
                   <div className="space-y-2">
-                    {(data.topProducts || []).map((p, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-stone-900/40 border border-stone-800/30 hover:bg-stone-900/60 transition-colors">
-                        <div className="flex items-center gap-3">
-                          <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-extrabold ${i === 0 ? 'bg-gold-500/20 text-gold-400' : i === 1 ? 'bg-stone-700 text-stone-300' : 'bg-stone-800 text-stone-500'}`}>
-                            {i === 0 ? <Crown className="w-3.5 h-3.5" /> : `#${i + 1}`}
-                          </span>
-                          <img src={p.image || '/marketing/IMG-20260804-WA0013.jpg'} alt="" className="w-9 h-9 rounded-lg object-cover bg-stone-800" />
-                          <div>
-                            <p className="text-xs font-bold text-stone-100 line-clamp-1">{p.name}</p>
-                            <p className="text-[10px] text-stone-500">{p.unitsSold} units sold</p>
+                    {displayedTopProducts.map((p, i) => {
+                      const fullProd = productsList.find(x => x.name?.toLowerCase() === p.name?.toLowerCase() || x.id === p.id);
+                      return (
+                        <div
+                          key={i}
+                          onClick={() => setSelectedProductDrillDown(fullProd || p)}
+                          className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer group hover-lift ${
+                            isDark
+                              ? 'bg-stone-900/40 border-stone-800/30 hover:bg-stone-800/60 hover:border-gold-500/30'
+                              : 'bg-stone-50/80 border-stone-200 hover:bg-white hover:border-forest-600/30 shadow-xs'
+                          }`}
+                          title="Click to view detailed product performance"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-extrabold ${i === 0 ? 'bg-gold-500/20 text-gold-400' : i === 1 ? 'bg-stone-700 text-stone-300' : 'bg-stone-800 text-stone-500'}`}>
+                              {i === 0 ? <Crown className="w-3.5 h-3.5" /> : `#${i + 1}`}
+                            </span>
+                            <img src={p.image || '/marketing/IMG-20260804-WA0013.jpg'} alt="" className="w-9 h-9 rounded-lg object-cover bg-stone-800" />
+                            <div>
+                              <p className={`text-xs font-bold line-clamp-1 group-hover:text-gold-500 transition-colors ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>{p.name}</p>
+                              <p className="text-[10px] text-stone-500">{p.unitsSold} units sold • <span className="text-gold-500 font-semibold">Drill down →</span></p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-sm font-bold ${isDark ? 'text-gold-400' : 'text-forest-900'}`}>₹{p.revenue?.toLocaleString?.() || p.revenue}</span>
+                            <Eye className="w-3.5 h-3.5 text-stone-400 group-hover:text-gold-500 opacity-60 group-hover:opacity-100 transition-opacity" />
                           </div>
                         </div>
-                        <span className="text-sm font-bold text-gold-400">₹{p.revenue?.toLocaleString?.() || p.revenue}</span>
-                      </div>
-                    ))}
+                      );
+                    })}
+                    {displayedTopProducts.length === 0 && (
+                      <div className="text-center py-6 text-xs text-stone-500">No top sellers recorded in this category.</div>
+                    )}
                   </div>
                 </div>
 
@@ -980,12 +1274,14 @@ export default function AdminDashboard() {
             <div className="space-y-5 animate-fade-in">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                  <h2 className="font-serif text-xl font-bold text-stone-100">Products & Inventory</h2>
-                  <p className="text-xs text-stone-500">Create, update, and manage all botanical formulations</p>
+                  <h2 className={`font-serif text-xl font-bold ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>Products & Inventory</h2>
+                  <p className="text-xs text-stone-500">Create, update, analyze, and manage all botanical formulations</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button onClick={handleExportProductsCSV} className="flex items-center gap-1.5 text-xs font-semibold text-stone-300 bg-stone-800 hover:bg-stone-700 px-3 py-2 rounded-xl border border-stone-700 transition-colors">
-                    <Download className="w-3.5 h-3.5 text-gold-400" /> Export CSV
+                  <button onClick={handleExportProductsCSV} className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl border transition-colors ${
+                    isDark ? 'text-stone-300 bg-stone-800 hover:bg-stone-700 border-stone-700' : 'text-stone-700 bg-white hover:bg-stone-100 border-stone-300 shadow-xs'
+                  }`}>
+                    <Download className={`w-3.5 h-3.5 ${isDark ? 'text-gold-400' : 'text-forest-900'}`} /> Export CSV
                   </button>
                   <button onClick={handleOpenCreateProduct} className="flex items-center gap-1.5 bg-gold-500 hover:bg-gold-600 text-stone-950 text-xs font-bold px-4 py-2 rounded-xl shadow-md transition-all hover:shadow-lg">
                     <Plus className="w-4 h-4" /> New Product
@@ -993,25 +1289,86 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              {/* Filters */}
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="relative flex-1 min-w-[200px]">
-                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-500" />
-                  <input type="text" placeholder="Search products by name or SKU..." value={productSearch} onChange={(e) => setProductSearch(e.target.value)}
-                    className="w-full bg-stone-900/60 border border-stone-800 rounded-xl pl-9 pr-4 py-2.5 text-xs text-stone-100 placeholder:text-stone-600 focus:outline-none focus:border-gold-500/50 transition-colors" />
+              {/* Product Filters & Search */}
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="relative flex-1 min-w-[220px]">
+                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
+                    <input
+                      type="text"
+                      placeholder="Search formulations by name, herb, or SKU..."
+                      value={productSearch}
+                      onChange={(e) => setProductSearch(e.target.value)}
+                      className={`w-full rounded-xl pl-9 pr-4 py-2.5 text-xs transition-colors focus:outline-none ${
+                        isDark
+                          ? 'bg-stone-900/60 border border-stone-800 text-stone-100 placeholder:text-stone-500 focus:border-gold-500/50'
+                          : 'bg-white border border-stone-300 text-stone-900 placeholder:text-stone-400 focus:border-forest-600 shadow-xs'
+                      }`}
+                    />
+                  </div>
+
+                  <select
+                    value={productCategoryFilter}
+                    onChange={(e) => setProductCategoryFilter(e.target.value)}
+                    className={`rounded-xl px-3 py-2.5 text-xs font-semibold focus:outline-none ${
+                      isDark
+                        ? 'bg-stone-900/60 border border-stone-800 text-stone-300 focus:border-gold-500/50'
+                        : 'bg-white border border-stone-300 text-stone-800 focus:border-forest-600 shadow-xs'
+                    }`}
+                  >
+                    <option value="all">All Categories ({productsList.length})</option>
+                    <option value="Hair Care">Hair Care</option>
+                    <option value="Skin Care">Skin Care</option>
+                    <option value="Body Care">Body Care</option>
+                    <option value="Essential Oils">Essential Oils</option>
+                  </select>
+
+                  <select
+                    value={productSortBy}
+                    onChange={(e) => setProductSortBy(e.target.value)}
+                    className={`rounded-xl px-3 py-2.5 text-xs font-semibold focus:outline-none ${
+                      isDark
+                        ? 'bg-stone-900/60 border border-stone-800 text-stone-300 focus:border-gold-500/50'
+                        : 'bg-white border border-stone-300 text-stone-800 focus:border-forest-600 shadow-xs'
+                    }`}
+                  >
+                    <option value="featured">Sort: Featured</option>
+                    <option value="price-low">Price: Low to High</option>
+                    <option value="price-high">Price: High to Low</option>
+                    <option value="stock-low">Stock: Low to High</option>
+                    <option value="stock-high">Stock: High to Low</option>
+                    <option value="name">Name: A to Z</option>
+                  </select>
                 </div>
-                <select value={productCategoryFilter} onChange={(e) => setProductCategoryFilter(e.target.value)}
-                  className="bg-stone-900/60 border border-stone-800 rounded-xl px-3 py-2.5 text-xs text-stone-300 focus:outline-none focus:border-gold-500/50">
-                  <option value="all">All Categories</option>
-                  <option value="Hair Care">Hair Care</option>
-                  <option value="Skin Care">Skin Care</option>
-                  <option value="Body Care">Body Care</option>
-                  <option value="Essential Oils">Essential Oils</option>
-                </select>
-                <label className="flex items-center gap-2 text-xs text-stone-400 cursor-pointer bg-stone-900/40 px-3 py-2.5 rounded-xl border border-stone-800">
-                  <input type="checkbox" checked={lowStockOnly} onChange={() => setLowStockOnly(!lowStockOnly)} className="accent-amber-500" />
-                  <AlertTriangle className="w-3.5 h-3.5 text-amber-400" /> Low Stock Only
-                </label>
+
+                {/* Stock Level Filter Pills */}
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <span className={`text-[11px] font-bold ${isDark ? 'text-stone-400' : 'text-stone-600'} flex items-center gap-1`}>
+                    <Sliders className="w-3.5 h-3.5" /> Stock Filter:
+                  </span>
+                  {[
+                    { id: 'all', label: `All (${productsList.length})` },
+                    { id: 'low-stock', label: `Low Stock <= 10 (${lowStockCount})` },
+                    { id: 'out-of-stock', label: `Out of Stock (${outOfStockCount})` },
+                    { id: 'healthy', label: `Healthy > 20 (${healthyStockCount})` },
+                  ].map(pill => (
+                    <button
+                      key={pill.id}
+                      onClick={() => { setProductStockStatus(pill.id); setLowStockOnly(false); }}
+                      className={`text-xs font-bold px-3 py-1 rounded-full border transition-all ${
+                        productStockStatus === pill.id
+                          ? (isDark
+                              ? 'bg-gold-500 text-stone-950 border-gold-400 shadow-sm'
+                              : 'bg-forest-900 text-gold-300 border-forest-900 shadow-sm')
+                          : (isDark
+                              ? 'bg-stone-900/60 text-stone-400 border-stone-800 hover:text-stone-200'
+                              : 'bg-white text-stone-600 border-stone-300 hover:text-stone-900 shadow-xs')
+                      }`}
+                    >
+                      {pill.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Products Table */}
@@ -1019,47 +1376,68 @@ export default function AdminDashboard() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
-                      <tr className="bg-stone-900/60 border-b border-stone-800">
-                        <th className="text-left px-4 py-3 text-stone-500 font-bold uppercase tracking-wider">Product</th>
-                        <th className="text-left px-4 py-3 text-stone-500 font-bold uppercase tracking-wider">Category</th>
-                        <th className="text-right px-4 py-3 text-stone-500 font-bold uppercase tracking-wider">Price</th>
-                        <th className="text-right px-4 py-3 text-stone-500 font-bold uppercase tracking-wider">Stock</th>
-                        <th className="text-right px-4 py-3 text-stone-500 font-bold uppercase tracking-wider">Rating</th>
-                        <th className="text-center px-4 py-3 text-stone-500 font-bold uppercase tracking-wider">Actions</th>
+                      <tr className={`border-b ${isDark ? 'bg-stone-900/60 border-stone-800 text-stone-400' : 'bg-stone-100/90 border-stone-200 text-stone-600'}`}>
+                        <th className="text-left px-4 py-3 font-bold uppercase tracking-wider">Product</th>
+                        <th className="text-left px-4 py-3 font-bold uppercase tracking-wider">Category</th>
+                        <th className="text-right px-4 py-3 font-bold uppercase tracking-wider">Price</th>
+                        <th className="text-right px-4 py-3 font-bold uppercase tracking-wider">Stock</th>
+                        <th className="text-right px-4 py-3 font-bold uppercase tracking-wider">Rating</th>
+                        <th className="text-center px-4 py-3 font-bold uppercase tracking-wider">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {filteredProducts.map((p) => (
-                        <tr key={p.id} className="border-b border-stone-800/40 hover:bg-stone-800/20 transition-colors">
+                        <tr key={p.id} className={`border-b transition-colors ${isDark ? 'border-stone-800/40 hover:bg-stone-800/20' : 'border-stone-200/60 hover:bg-stone-50'}`}>
                           <td className="px-4 py-3">
-                            <div className="flex items-center gap-3">
-                              <img src={p.image || '/marketing/IMG-20260804-WA0013.jpg'} alt="" className="w-8 h-8 rounded-lg object-cover bg-stone-800" />
+                            <div
+                              onClick={() => setSelectedProductDrillDown(p)}
+                              className="flex items-center gap-3 cursor-pointer group"
+                              title="Click to drill down into product analytics"
+                            >
+                              <img src={p.image || '/marketing/IMG-20260804-WA0013.jpg'} alt="" className="w-9 h-9 rounded-lg object-cover bg-stone-800 border border-stone-700/40 group-hover:scale-105 transition-transform" />
                               <div>
-                                <p className="font-bold text-stone-100 line-clamp-1">{p.name}</p>
-                                <p className="text-[10px] text-stone-500">{p.sku || 'N/A'}</p>
+                                <p className={`font-bold line-clamp-1 group-hover:text-gold-500 transition-colors ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>{p.name}</p>
+                                <p className="text-[10px] text-stone-500">{p.sku || 'N/A'} • <span className="text-gold-500 font-semibold">Inspect</span></p>
                               </div>
                             </div>
                           </td>
                           <td className="px-4 py-3">
-                            <span className="bg-stone-800 text-stone-300 text-[10px] font-bold px-2 py-1 rounded-lg">{p.category}</span>
+                            <span className={`text-[10px] font-bold px-2 py-1 rounded-lg border ${
+                              isDark ? 'bg-stone-800 text-stone-300 border-stone-700' : 'bg-stone-100 text-stone-700 border-stone-200'
+                            }`}>{p.category}</span>
                           </td>
-                          <td className="px-4 py-3 text-right font-bold text-stone-100">₹{p.price}</td>
+                          <td className={`px-4 py-3 text-right font-bold ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>₹{p.price}</td>
                           <td className="px-4 py-3 text-right">
-                            <span className={`font-bold ${p.stock <= (p.lowStockThreshold || 10) ? 'text-red-400' : p.stock <= 30 ? 'text-amber-400' : 'text-emerald-400'}`}>
-                              {p.stock}
+                            <span className={`font-bold px-2 py-0.5 rounded-full text-[11px] ${
+                              p.stock === 0
+                                ? 'bg-red-950/40 text-red-400 border border-red-800/40'
+                                : p.stock <= (p.lowStockThreshold || 10)
+                                ? 'bg-amber-950/40 text-amber-400 border border-amber-800/40'
+                                : 'bg-emerald-950/30 text-emerald-400 border border-emerald-800/30'
+                            }`}>
+                              {p.stock} units
                             </span>
                           </td>
                           <td className="px-4 py-3 text-right">
-                            <span className="flex items-center gap-1 justify-end text-gold-400">
+                            <span className="flex items-center gap-1 justify-end text-gold-400 font-semibold">
                               <Star className="w-3 h-3 fill-current" /> {p.rating || 'N/A'}
                             </span>
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex items-center justify-center gap-1.5">
+                              <button
+                                onClick={() => setSelectedProductDrillDown(p)}
+                                className={`p-1.5 rounded-lg border transition-colors ${
+                                  isDark ? 'bg-gold-500/10 border-gold-500/30 text-gold-400 hover:bg-gold-500/20' : 'bg-gold-50 border-gold-300 text-forest-900 hover:bg-gold-100'
+                                }`}
+                                title="Drill Down: Product Analytics & Formulation Details"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                              </button>
                               <button onClick={() => handleQuickStockAdjust(p.id, 10, p.name)} className="p-1.5 rounded-lg bg-emerald-900/40 text-emerald-300 hover:bg-emerald-800 transition-colors" title="+10 Stock">
                                 <Plus className="w-3.5 h-3.5" />
                               </button>
-                              <button onClick={() => handleOpenEditProduct(p)} className="p-1.5 rounded-lg bg-blue-900/40 text-blue-300 hover:bg-blue-800 transition-colors" title="Edit">
+                              <button onClick={() => handleOpenEditProduct(p)} className="p-1.5 rounded-lg bg-blue-900/40 text-blue-300 hover:bg-blue-800 transition-colors" title="Edit Formulation">
                                 <Edit className="w-3.5 h-3.5" />
                               </button>
                               <button onClick={() => handleDeleteProduct(p.id, p.name)} className="p-1.5 rounded-lg bg-red-900/40 text-red-300 hover:bg-red-800 transition-colors" title="Delete">
@@ -1073,7 +1451,7 @@ export default function AdminDashboard() {
                   </table>
                 </div>
                 {filteredProducts.length === 0 && (
-                  <div className="text-center py-12 text-stone-500 text-sm">No products found matching your filters.</div>
+                  <div className="text-center py-12 text-stone-500 text-sm">No formulations found matching your filters.</div>
                 )}
               </div>
             </div>
@@ -1084,69 +1462,168 @@ export default function AdminDashboard() {
             <div className="space-y-5 animate-fade-in">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                  <h2 className="font-serif text-xl font-bold text-stone-100">Order Fulfillment</h2>
-                  <p className="text-xs text-stone-500">Track and manage all customer orders</p>
+                  <h2 className={`font-serif text-xl font-bold ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>Order Fulfillment & Tracking</h2>
+                  <p className="text-xs text-stone-500">Track shipments, manage delivery status, and print customer tax invoices</p>
                 </div>
-                <button onClick={handleExportOrdersCSV} className="flex items-center gap-1.5 text-xs font-semibold text-stone-300 bg-stone-800 hover:bg-stone-700 px-3 py-2 rounded-xl border border-stone-700 transition-colors">
-                  <Download className="w-3.5 h-3.5 text-gold-400" /> Export CSV
+                <button onClick={handleExportOrdersCSV} className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl border transition-colors ${
+                  isDark ? 'text-stone-300 bg-stone-800 hover:bg-stone-700 border-stone-700' : 'text-stone-700 bg-white hover:bg-stone-100 border-stone-300 shadow-xs'
+                }`}>
+                  <Download className={`w-3.5 h-3.5 ${isDark ? 'text-gold-400' : 'text-forest-900'}`} /> Export CSV
                 </button>
               </div>
 
-              {/* Filters */}
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="relative flex-1 min-w-[200px]">
-                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-500" />
-                  <input type="text" placeholder="Search by order #, customer name or email..." value={orderSearch} onChange={(e) => setOrderSearch(e.target.value)}
-                    className="w-full bg-stone-900/60 border border-stone-800 rounded-xl pl-9 pr-4 py-2.5 text-xs text-stone-100 placeholder:text-stone-600 focus:outline-none focus:border-gold-500/50 transition-colors" />
+              {/* Order Filters */}
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="relative flex-1 min-w-[220px]">
+                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
+                    <input
+                      type="text"
+                      placeholder="Search by order #, customer name, email, or city..."
+                      value={orderSearch}
+                      onChange={(e) => setOrderSearch(e.target.value)}
+                      className={`w-full rounded-xl pl-9 pr-4 py-2.5 text-xs transition-colors focus:outline-none ${
+                        isDark
+                          ? 'bg-stone-900/60 border border-stone-800 text-stone-100 placeholder:text-stone-500 focus:border-gold-500/50'
+                          : 'bg-white border border-stone-300 text-stone-900 placeholder:text-stone-400 focus:border-forest-600 shadow-xs'
+                      }`}
+                    />
+                  </div>
+
+                  <select
+                    value={orderPaymentFilter}
+                    onChange={(e) => setOrderPaymentFilter(e.target.value)}
+                    className={`rounded-xl px-3 py-2.5 text-xs font-semibold focus:outline-none ${
+                      isDark
+                        ? 'bg-stone-900/60 border border-stone-800 text-stone-300 focus:border-gold-500/50'
+                        : 'bg-white border border-stone-300 text-stone-800 focus:border-forest-600 shadow-xs'
+                    }`}
+                  >
+                    <option value="all">All Payment Types</option>
+                    <option value="prepaid">Prepaid (UPI / Cards)</option>
+                    <option value="cod">Cash on Delivery (COD)</option>
+                  </select>
+
+                  <select
+                    value={orderDateFilter}
+                    onChange={(e) => setOrderDateFilter(e.target.value)}
+                    className={`rounded-xl px-3 py-2.5 text-xs font-semibold focus:outline-none ${
+                      isDark
+                        ? 'bg-stone-900/60 border border-stone-800 text-stone-300 focus:border-gold-500/50'
+                        : 'bg-white border border-stone-300 text-stone-800 focus:border-forest-600 shadow-xs'
+                    }`}
+                  >
+                    <option value="all">Date: All Time</option>
+                    <option value="today">Today (Last 24h)</option>
+                    <option value="7d">Last 7 Days</option>
+                    <option value="30d">Last 30 Days</option>
+                  </select>
                 </div>
-                <select value={orderStatusFilter} onChange={(e) => setOrderStatusFilter(e.target.value)}
-                  className="bg-stone-900/60 border border-stone-800 rounded-xl px-3 py-2.5 text-xs text-stone-300 focus:outline-none focus:border-gold-500/50">
-                  <option value="all">All Statuses</option>
-                  <option value="pending">Pending</option>
-                  <option value="processing">Processing</option>
-                  <option value="shipped">Shipped</option>
-                  <option value="delivered">Delivered</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
+
+                {/* Status Filter Pills */}
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <span className={`text-[11px] font-bold ${isDark ? 'text-stone-400' : 'text-stone-600'} flex items-center gap-1`}>
+                    <Filter className="w-3 h-3" /> Status:
+                  </span>
+                  {[
+                    { id: 'all', label: `All Orders (${ordersList.length})` },
+                    { id: 'pending', label: `Pending (${ordersList.filter(o => o.fulfillmentStatus === 'pending').length})` },
+                    { id: 'processing', label: `Processing (${ordersList.filter(o => o.fulfillmentStatus === 'processing').length})` },
+                    { id: 'shipped', label: `Shipped (${ordersList.filter(o => o.fulfillmentStatus === 'shipped').length})` },
+                    { id: 'delivered', label: `Delivered (${ordersList.filter(o => o.fulfillmentStatus === 'delivered').length})` },
+                    { id: 'cancelled', label: `Cancelled (${ordersList.filter(o => o.fulfillmentStatus === 'cancelled').length})` }
+                  ].map(s => (
+                    <button
+                      key={s.id}
+                      onClick={() => setOrderStatusFilter(s.id)}
+                      className={`text-xs font-bold px-3 py-1 rounded-full border transition-all ${
+                        orderStatusFilter === s.id
+                          ? (isDark
+                              ? 'bg-gold-500 text-stone-950 border-gold-400 shadow-sm'
+                              : 'bg-forest-900 text-gold-300 border-forest-900 shadow-sm')
+                          : (isDark
+                              ? 'bg-stone-900/60 text-stone-400 border-stone-800 hover:text-stone-200'
+                              : 'bg-white text-stone-600 border-stone-300 hover:text-stone-900 shadow-xs')
+                      }`}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Orders List */}
               <div className="space-y-3">
                 {filteredOrders.map((o) => {
                   const statusColors = {
-                    pending: 'text-purple-400 bg-purple-950/30 border-purple-800/30',
-                    processing: 'text-amber-400 bg-amber-950/30 border-amber-800/30',
-                    shipped: 'text-blue-400 bg-blue-950/30 border-blue-800/30',
-                    delivered: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/30',
-                    cancelled: 'text-red-400 bg-red-950/30 border-red-800/30'
+                    pending: 'text-purple-400 bg-purple-950/30 border-purple-800/40',
+                    processing: 'text-amber-400 bg-amber-950/30 border-amber-800/40',
+                    shipped: 'text-blue-400 bg-blue-950/30 border-blue-800/40',
+                    delivered: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40',
+                    cancelled: 'text-red-400 bg-red-950/30 border-red-800/40'
                   };
                   return (
-                    <div key={o.id} className="glass-card rounded-xl p-4 hover:bg-stone-800/20 transition-colors">
+                    <div
+                      key={o.id}
+                      onClick={() => setSelectedOrderDetails(o)}
+                      className={`glass-card rounded-2xl p-4 transition-all cursor-pointer group hover-lift border ${
+                        isDark ? 'hover:border-gold-500/30' : 'hover:border-forest-600/30 shadow-xs'
+                      }`}
+                    >
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-lg bg-stone-800 flex items-center justify-center text-stone-400">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${
+                            isDark ? 'bg-stone-800/80 border-stone-700 text-stone-300' : 'bg-stone-100 border-stone-200 text-stone-700'
+                          }`}>
                             <Hash className="w-4 h-4" />
                           </div>
                           <div>
-                            <p className="text-xs font-bold text-stone-100">{o.orderNumber || o.id?.slice(-8)}</p>
-                            <p className="text-[10px] text-stone-500">{o.userName} • {o.userEmail}</p>
+                            <div className="flex items-center gap-2">
+                              <p className={`text-xs font-bold group-hover:text-gold-500 transition-colors ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>
+                                {o.orderNumber || o.id?.slice(-8)}
+                              </p>
+                              <span className="text-[10px] text-stone-500">• {o.items?.length || 1} items</span>
+                            </div>
+                            <p className="text-[11px] text-stone-500 mt-0.5">{o.userName} • {o.userEmail}</p>
                           </div>
                         </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-xs font-bold text-gold-400">₹{o.totalAmount}</span>
-                          <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${statusColors[o.fulfillmentStatus] || ''}`}>
-                            {o.fulfillmentStatus?.charAt(0).toUpperCase() + o.fulfillmentStatus?.slice(1)}
+
+                        <div className="flex flex-wrap items-center gap-2.5">
+                          <span className={`text-sm font-bold ${isDark ? 'text-gold-400' : 'text-forest-900'}`}>₹{o.totalAmount}</span>
+                          <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border capitalize ${statusColors[o.fulfillmentStatus] || ''}`}>
+                            {o.fulfillmentStatus}
                           </span>
                           <span className="text-[10px] text-stone-500">{new Date(o.createdAt).toLocaleDateString()}</span>
                         </div>
-                        <div className="flex items-center gap-1.5">
+
+                        <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={() => handlePrintInvoice(o)}
+                            className={`p-1.5 rounded-lg border transition-colors ${
+                              isDark ? 'bg-stone-800 text-stone-300 border-stone-700 hover:text-gold-400' : 'bg-stone-100 text-stone-700 border-stone-200 hover:text-forest-900'
+                            }`}
+                            title="Print Tax Invoice / Packing Slip"
+                          >
+                            <Printer className="w-3.5 h-3.5" />
+                          </button>
                           {['pending', 'processing', 'shipped', 'delivered', 'cancelled'].filter(s => s !== o.fulfillmentStatus).map(status => (
-                            <button key={status} onClick={() => handleUpdateOrderStatus(o.id, status)}
-                              className="text-[10px] font-bold px-2 py-1 rounded-lg bg-stone-800/60 text-stone-400 hover:text-stone-200 border border-stone-700/40 hover:bg-stone-800 transition-colors capitalize">
+                            <button
+                              key={status}
+                              onClick={() => handleUpdateOrderStatus(o.id, status)}
+                              className={`text-[10px] font-bold px-2 py-1 rounded-lg border transition-colors capitalize ${
+                                isDark ? 'bg-stone-800/80 text-stone-300 hover:text-white border-stone-700/60 hover:bg-stone-700' : 'bg-stone-100 text-stone-700 hover:text-stone-950 border-stone-200 hover:bg-stone-200'
+                              }`}
+                            >
                               → {status}
                             </button>
                           ))}
-                          <button onClick={() => setSelectedOrderDetails(o)} className="p-1.5 rounded-lg bg-stone-800/60 text-stone-400 hover:text-gold-400 border border-stone-700/40 hover:bg-stone-800 transition-colors">
+                          <button
+                            onClick={() => setSelectedOrderDetails(o)}
+                            className={`p-1.5 rounded-lg border transition-colors ${
+                              isDark ? 'bg-gold-500/10 border-gold-500/30 text-gold-400 hover:bg-gold-500/20' : 'bg-gold-50 border-gold-300 text-forest-900 hover:bg-gold-100'
+                            }`}
+                            title="Drill Down: Complete Order Details & Tracking"
+                          >
                             <Eye className="w-3.5 h-3.5" />
                           </button>
                         </div>
@@ -1155,7 +1632,7 @@ export default function AdminDashboard() {
                   );
                 })}
                 {filteredOrders.length === 0 && (
-                  <div className="text-center py-12 text-stone-500 text-sm">No orders found.</div>
+                  <div className="text-center py-12 text-stone-500 text-sm">No orders found matching your filters.</div>
                 )}
               </div>
             </div>
@@ -1190,11 +1667,15 @@ export default function AdminDashboard() {
                     {filteredUsers.map(u => (
                       <tr key={u.id} className="border-b border-stone-800/40 hover:bg-stone-800/20 transition-colors">
                         <td className="px-4 py-3">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-gold-500/20 to-gold-700/10 border border-gold-500/20 flex items-center justify-center text-gold-400 text-[10px] font-bold">
+                          <div
+                            onClick={() => setSelectedCustomerDetails(u)}
+                            className="flex items-center gap-2.5 cursor-pointer group"
+                            title="Click to drill down into customer history and metrics"
+                          >
+                            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-gold-500/20 to-gold-700/10 border border-gold-500/20 flex items-center justify-center text-gold-400 text-[10px] font-bold group-hover:scale-105 transition-transform">
                               {u.name?.charAt(0).toUpperCase()}
                             </div>
-                            <span className="font-bold text-stone-100">{u.name}</span>
+                            <span className={`font-bold group-hover:text-gold-500 transition-colors ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>{u.name}</span>
                           </div>
                         </td>
                         <td className="px-4 py-3 text-stone-400">{u.email}</td>
@@ -1206,6 +1687,15 @@ export default function AdminDashboard() {
                         <td className="px-4 py-3 text-stone-500">{new Date(u.createdAt).toLocaleDateString()}</td>
                         <td className="px-4 py-3">
                           <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              onClick={() => setSelectedCustomerDetails(u)}
+                              className={`p-1.5 rounded-lg border transition-colors ${
+                                isDark ? 'bg-gold-500/10 border-gold-500/30 text-gold-400 hover:bg-gold-500/20' : 'bg-gold-50 border-gold-300 text-forest-900 hover:bg-gold-100'
+                              }`}
+                              title="Customer Drill-Down: LTV, Order History & Activity"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                            </button>
                             <button onClick={() => handleToggleUserRole(u.id, u.role, u.name)}
                               className="text-[10px] font-bold px-2 py-1 rounded-lg bg-stone-800/60 text-stone-400 hover:text-gold-400 border border-stone-700/40 hover:bg-stone-800 transition-colors">
                               {u.role === 'admin' ? 'Demote' : 'Promote'}
@@ -1352,34 +1842,469 @@ export default function AdminDashboard() {
         </footer>
       </div>
 
-      {/* ========== ORDER DETAIL MODAL ========== */}
+      {/* ========== 1. ORDER DETAIL DRILL-DOWN MODAL ========== */}
       {selectedOrderDetails && (
-        <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4" onClick={() => setSelectedOrderDetails(null)}>
-          <div className="bg-stone-900 rounded-2xl border border-stone-700 shadow-2xl max-w-lg w-full p-6 space-y-4 animate-fade-in-scale max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between">
-              <h3 className="font-serif font-bold text-lg text-stone-100">Order Details</h3>
-              <button onClick={() => setSelectedOrderDetails(null)} className="p-1.5 rounded-lg bg-stone-800 text-stone-400 hover:text-stone-200 transition-colors"><X className="w-4 h-4" /></button>
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[60] flex items-center justify-center p-3 sm:p-4" onClick={() => setSelectedOrderDetails(null)}>
+          <div
+            className={`rounded-3xl border shadow-2xl max-w-2xl w-full p-6 space-y-5 animate-fade-in-scale max-h-[90vh] overflow-y-auto ${
+              isDark ? 'bg-stone-900 border-stone-700 text-stone-100' : 'bg-white border-stone-200 text-stone-900 shadow-2xl'
+            }`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Top Header */}
+            <div className="flex items-start justify-between pb-4 border-b border-stone-800/40">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${
+                    isDark ? 'bg-gold-500/20 text-gold-400 border border-gold-500/30' : 'bg-forest-900 text-gold-300'
+                  }`}>
+                    Order Drill-Down
+                  </span>
+                  <span className="text-xs text-stone-500">#{selectedOrderDetails.orderNumber || selectedOrderDetails.id?.slice(-8)}</span>
+                </div>
+                <h3 className={`font-serif font-bold text-xl mt-1 ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>
+                  Order Summary & Logistics
+                </h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handlePrintInvoice(selectedOrderDetails)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors ${
+                    isDark ? 'bg-stone-800 hover:bg-stone-700 text-stone-200 border-stone-700' : 'bg-stone-100 hover:bg-stone-200 text-stone-800 border-stone-300'
+                  }`}
+                  title="Print Tax Invoice"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Print Invoice</span>
+                </button>
+                <button
+                  onClick={() => setSelectedOrderDetails(null)}
+                  className={`p-1.5 rounded-xl border transition-colors ${
+                    isDark ? 'bg-stone-800 text-stone-400 hover:text-stone-200 border-stone-700' : 'bg-stone-100 text-stone-600 hover:text-stone-900 border-stone-200'
+                  }`}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
-            <div className="space-y-3 text-xs">
-              <div className="flex justify-between"><span className="text-stone-500">Order #</span><span className="font-bold text-stone-100">{selectedOrderDetails.orderNumber}</span></div>
-              <div className="flex justify-between"><span className="text-stone-500">Customer</span><span className="text-stone-200">{selectedOrderDetails.userName}</span></div>
-              <div className="flex justify-between"><span className="text-stone-500">Email</span><span className="text-stone-200">{selectedOrderDetails.userEmail}</span></div>
-              <div className="flex justify-between"><span className="text-stone-500">Total</span><span className="font-bold text-gold-400">₹{selectedOrderDetails.totalAmount}</span></div>
-              <div className="flex justify-between"><span className="text-stone-500">Payment</span><span className="text-stone-200">{selectedOrderDetails.paymentMethod}</span></div>
-              <div className="flex justify-between"><span className="text-stone-500">Status</span><span className="font-bold capitalize text-stone-200">{selectedOrderDetails.fulfillmentStatus}</span></div>
-              <div className="flex justify-between"><span className="text-stone-500">Date</span><span className="text-stone-200">{new Date(selectedOrderDetails.createdAt).toLocaleString()}</span></div>
+
+            {/* Fulfillment Stepper Timeline */}
+            <div className={`p-4 rounded-2xl border ${isDark ? 'bg-stone-800/40 border-stone-700/40' : 'bg-stone-50 border-stone-200'}`}>
+              <span className="text-[10px] font-bold uppercase text-stone-500 tracking-wider block mb-3">Fulfillment Journey</span>
+              <div className="grid grid-cols-4 gap-2 text-center text-xs">
+                {[
+                  { step: 'Placed', active: true, icon: CheckCircle2 },
+                  { step: 'Processing', active: ['processing', 'shipped', 'delivered'].includes(selectedOrderDetails.fulfillmentStatus), icon: RefreshCw },
+                  { step: 'Shipped', active: ['shipped', 'delivered'].includes(selectedOrderDetails.fulfillmentStatus), icon: Truck },
+                  { step: 'Delivered', active: selectedOrderDetails.fulfillmentStatus === 'delivered', icon: Check }
+                ].map((s, idx) => {
+                  const Icon = s.icon;
+                  return (
+                    <div key={idx} className="flex flex-col items-center">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 transition-all ${
+                        s.active
+                          ? 'bg-emerald-500 text-stone-950 font-bold shadow-md'
+                          : (isDark ? 'bg-stone-800 text-stone-600 border border-stone-700' : 'bg-stone-200 text-stone-400')
+                      }`}>
+                        <Icon className="w-4 h-4" />
+                      </div>
+                      <span className={`text-[11px] font-semibold ${s.active ? (isDark ? 'text-stone-200' : 'text-stone-900') : 'text-stone-500'}`}>{s.step}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-            {selectedOrderDetails.items && selectedOrderDetails.items.length > 0 && (
-              <div className="pt-3 border-t border-stone-800">
-                <h4 className="text-xs font-bold text-stone-400 mb-2 uppercase tracking-wider">Items</h4>
-                {selectedOrderDetails.items.map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between py-2 border-b border-stone-800/30 last:border-0">
-                    <div className="text-xs text-stone-200">{item.name} × {item.quantity}</div>
-                    <div className="text-xs font-bold text-stone-100">₹{item.price * item.quantity}</div>
+
+            {/* 2-Column Details Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Left Column: Customer & Delivery */}
+              <div className={`p-4 rounded-2xl border space-y-3 ${isDark ? 'bg-stone-800/30 border-stone-700/40' : 'bg-stone-50/80 border-stone-200'}`}>
+                <h4 className="text-xs font-bold uppercase text-stone-500 tracking-wider flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-gold-500" /> Customer & Shipping
+                </h4>
+                <div className="space-y-1.5 text-xs">
+                  <div>
+                    <span className="text-stone-500 text-[11px] block">Customer:</span>
+                    <p className={`font-bold ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>{selectedOrderDetails.userName}</p>
+                    <p className="text-[11px] text-stone-500">{selectedOrderDetails.userEmail}</p>
                   </div>
-                ))}
+                  <div>
+                    <span className="text-stone-500 text-[11px] block">Shipping Destination:</span>
+                    <p className={`text-[11px] leading-relaxed ${isDark ? 'text-stone-300' : 'text-stone-700'}`}>
+                      {selectedOrderDetails.shippingAddress
+                        ? `${selectedOrderDetails.shippingAddress.street || ''}, ${selectedOrderDetails.shippingAddress.city || ''}, ${selectedOrderDetails.shippingAddress.state || ''} - ${selectedOrderDetails.shippingAddress.postalCode || ''}`
+                        : 'Standard shipping address on verified account'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Tracking updater */}
+                <div className="pt-2 border-t border-stone-800/40 space-y-2">
+                  <span className="text-[10px] font-bold uppercase text-stone-500">Shipping Carrier & Tracking</span>
+                  <div className="flex gap-2">
+                    <select
+                      value={trackingCarrierInput}
+                      onChange={(e) => setTrackingCarrierInput(e.target.value)}
+                      className={`text-[11px] rounded-xl px-2.5 py-1.5 border focus:outline-none ${
+                        isDark ? 'bg-stone-800 border-stone-700 text-stone-200' : 'bg-white border-stone-300 text-stone-800'
+                      }`}
+                    >
+                      <option>Blue Dart</option>
+                      <option>Delhivery</option>
+                      <option>DTDC</option>
+                      <option>India Post</option>
+                    </select>
+                    <input
+                      type="text"
+                      placeholder="AWB / Tracking #"
+                      value={trackingNumberInput}
+                      onChange={(e) => setTrackingNumberInput(e.target.value)}
+                      className={`flex-1 text-[11px] rounded-xl px-3 py-1.5 border focus:outline-none ${
+                        isDark ? 'bg-stone-800 border-stone-700 text-stone-100 placeholder:text-stone-500' : 'bg-white border-stone-300 text-stone-900 placeholder:text-stone-400'
+                      }`}
+                    />
+                    <button
+                      onClick={() => handleSaveTracking(selectedOrderDetails.id)}
+                      className="bg-gold-500 hover:bg-gold-600 text-stone-950 font-bold text-xs px-3 py-1.5 rounded-xl transition-all shadow-xs"
+                    >
+                      Save
+                    </button>
+                  </div>
+                  {selectedOrderDetails.trackingNumber && (
+                    <p className="text-[11px] text-emerald-400 flex items-center gap-1 font-semibold">
+                      <CheckCircle2 className="w-3 h-3" /> Assigned AWB: {selectedOrderDetails.trackingNumber} ({selectedOrderDetails.carrier || 'Blue Dart'})
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Right Column: Financials & Status Controls */}
+              <div className={`p-4 rounded-2xl border space-y-3 ${isDark ? 'bg-stone-800/30 border-stone-700/40' : 'bg-stone-50/80 border-stone-200'}`}>
+                <h4 className="text-xs font-bold uppercase text-stone-500 tracking-wider flex items-center gap-1.5">
+                  <DollarSign className="w-3.5 h-3.5 text-emerald-500" /> Payment & Status Controls
+                </h4>
+                <div className="space-y-1 text-xs">
+                  <div className="flex justify-between py-1 border-b border-stone-800/30">
+                    <span className="text-stone-500">Payment Gateway:</span>
+                    <span className="font-bold capitalize">{selectedOrderDetails.paymentMethod || 'Prepaid'}</span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-stone-800/30">
+                    <span className="text-stone-500">Payment Status:</span>
+                    <span className="font-bold text-emerald-400 capitalize">{selectedOrderDetails.paymentStatus || 'Completed'}</span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-stone-800/30">
+                    <span className="text-stone-500">Subtotal:</span>
+                    <span>₹{selectedOrderDetails.totalAmount}</span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-stone-800/30">
+                    <span className="text-stone-500">Shipping:</span>
+                    <span className="text-emerald-500 font-bold">FREE</span>
+                  </div>
+                  <div className="flex justify-between py-1.5 font-bold text-sm">
+                    <span>Grand Total:</span>
+                    <span className={isDark ? 'text-gold-400' : 'text-forest-900'}>₹{selectedOrderDetails.totalAmount}</span>
+                  </div>
+                </div>
+
+                {/* Quick Status Updater Strip */}
+                <div className="pt-2 border-t border-stone-800/40 space-y-2">
+                  <span className="text-[10px] font-bold uppercase text-stone-500">Update Live Status</span>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {['processing', 'shipped', 'delivered', 'cancelled'].map(st => (
+                      <button
+                        key={st}
+                        onClick={() => handleUpdateOrderStatus(selectedOrderDetails.id, st)}
+                        className={`text-[11px] font-bold py-1.5 px-2 rounded-xl border capitalize transition-all ${
+                          selectedOrderDetails.fulfillmentStatus === st
+                            ? 'bg-gold-500 text-stone-950 border-gold-400 shadow-sm'
+                            : (isDark ? 'bg-stone-800/80 hover:bg-stone-700 text-stone-300 border-stone-700' : 'bg-white hover:bg-stone-100 text-stone-700 border-stone-200')
+                        }`}
+                      >
+                        {st}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Line Items List */}
+            {selectedOrderDetails.items && selectedOrderDetails.items.length > 0 && (
+              <div className="pt-2">
+                <h4 className="text-xs font-bold uppercase text-stone-500 tracking-wider mb-2">Itemized Formulations ({selectedOrderDetails.items.length})</h4>
+                <div className={`rounded-2xl border divide-y overflow-hidden ${
+                  isDark ? 'bg-stone-800/20 border-stone-800 divide-stone-800/40' : 'bg-stone-50 border-stone-200 divide-stone-200'
+                }`}>
+                  {selectedOrderDetails.items.map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-3 text-xs">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-forest-900/40 border border-gold-500/20 flex items-center justify-center text-xs">🌿</div>
+                        <div>
+                          <p className={`font-bold ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>{item.name}</p>
+                          <p className="text-[10px] text-stone-500">Qty: {item.quantity} • ₹{item.price} each</p>
+                        </div>
+                      </div>
+                      <span className={`font-bold ${isDark ? 'text-gold-400' : 'text-forest-900'}`}>₹{item.price * item.quantity}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ========== 2. PRODUCT PERFORMANCE DRILL-DOWN MODAL ========== */}
+      {selectedProductDrillDown && (
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[60] flex items-center justify-center p-3 sm:p-4" onClick={() => setSelectedProductDrillDown(null)}>
+          <div
+            className={`rounded-3xl border shadow-2xl max-w-xl w-full p-6 space-y-5 animate-fade-in-scale max-h-[90vh] overflow-y-auto ${
+              isDark ? 'bg-stone-900 border-stone-700 text-stone-100' : 'bg-white border-stone-200 text-stone-900 shadow-2xl'
+            }`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-start justify-between pb-4 border-b border-stone-800/40">
+              <div className="flex items-center gap-3">
+                <img
+                  src={selectedProductDrillDown.image || '/marketing/IMG-20260804-WA0013.jpg'}
+                  alt=""
+                  className="w-12 h-12 rounded-2xl object-cover bg-stone-800 border border-gold-500/30 shadow-md"
+                />
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider bg-gold-500/20 text-gold-400 border border-gold-500/30 px-2 py-0.5 rounded-full">
+                      Product Drill-Down
+                    </span>
+                    <span className="text-xs text-stone-500">{selectedProductDrillDown.category}</span>
+                  </div>
+                  <h3 className={`font-serif font-bold text-lg mt-0.5 ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>
+                    {selectedProductDrillDown.name}
+                  </h3>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedProductDrillDown(null)}
+                className={`p-1.5 rounded-xl border transition-colors ${
+                  isDark ? 'bg-stone-800 text-stone-400 hover:text-stone-200 border-stone-700' : 'bg-stone-100 text-stone-600 hover:text-stone-900 border-stone-200'
+                }`}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* 4-Card Analytics Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className={`p-3 rounded-2xl border text-center ${isDark ? 'bg-stone-800/40 border-stone-700/40' : 'bg-stone-50 border-stone-200'}`}>
+                <span className="text-[10px] font-bold uppercase text-stone-500 block">Selling Price</span>
+                <p className={`text-base font-extrabold mt-0.5 ${isDark ? 'text-gold-400' : 'text-forest-900'}`}>₹{selectedProductDrillDown.price}</p>
+                <span className="text-[10px] text-stone-500 line-through">₹{selectedProductDrillDown.mrp || selectedProductDrillDown.price}</span>
+              </div>
+              <div className={`p-3 rounded-2xl border text-center ${isDark ? 'bg-stone-800/40 border-stone-700/40' : 'bg-stone-50 border-stone-200'}`}>
+                <span className="text-[10px] font-bold uppercase text-stone-500 block">Est. Margin</span>
+                <p className="text-base font-extrabold text-emerald-400 mt-0.5">
+                  {Math.round(((selectedProductDrillDown.price - (selectedProductDrillDown.costPrice || Math.round(selectedProductDrillDown.price * 0.35))) / selectedProductDrillDown.price) * 100)}%
+                </p>
+                <span className="text-[10px] text-stone-500">Cost: ₹{selectedProductDrillDown.costPrice || Math.round(selectedProductDrillDown.price * 0.35)}</span>
+              </div>
+              <div className={`p-3 rounded-2xl border text-center ${isDark ? 'bg-stone-800/40 border-stone-700/40' : 'bg-stone-50 border-stone-200'}`}>
+                <span className="text-[10px] font-bold uppercase text-stone-500 block">Stock Level</span>
+                <p className={`text-base font-extrabold mt-0.5 ${selectedProductDrillDown.stock <= 10 ? 'text-red-400' : 'text-emerald-400'}`}>
+                  {selectedProductDrillDown.stock}
+                </p>
+                <span className="text-[10px] text-stone-500">{selectedProductDrillDown.stock <= 10 ? 'Low Stock Alert' : 'Healthy Stock'}</span>
+              </div>
+              <div className={`p-3 rounded-2xl border text-center ${isDark ? 'bg-stone-800/40 border-stone-700/40' : 'bg-stone-50 border-stone-200'}`}>
+                <span className="text-[10px] font-bold uppercase text-stone-500 block">Customer Rating</span>
+                <p className="text-base font-extrabold text-gold-400 mt-0.5 flex items-center justify-center gap-1">
+                  <Star className="w-4 h-4 fill-current" /> {selectedProductDrillDown.rating || 4.9}
+                </p>
+                <span className="text-[10px] text-stone-500">{selectedProductDrillDown.numReviews || 24} reviews</span>
+              </div>
+            </div>
+
+            {/* Quick Restock Action Bar */}
+            <div className={`p-4 rounded-2xl border space-y-2.5 ${isDark ? 'bg-stone-800/30 border-stone-700/40' : 'bg-stone-50 border-stone-200'}`}>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase text-stone-500">Quick Inventory Restock</span>
+                <span className="text-xs font-semibold text-stone-400">Current: <strong className="text-emerald-400">{selectedProductDrillDown.stock} units</strong></span>
+              </div>
+              <div className="grid grid-cols-4 gap-2">
+                {[10, 25, 50, 100].map(delta => (
+                  <button
+                    key={delta}
+                    onClick={async () => {
+                      await handleQuickStockAdjust(selectedProductDrillDown.id, delta, selectedProductDrillDown.name);
+                      setSelectedProductDrillDown(prev => ({ ...prev, stock: (prev.stock || 0) + delta }));
+                    }}
+                    className={`py-2 px-3 rounded-xl font-bold text-xs border transition-all flex items-center justify-center gap-1 ${
+                      isDark
+                        ? 'bg-stone-800 hover:bg-stone-700 text-emerald-400 border-stone-700 hover:border-emerald-500/40'
+                        : 'bg-white hover:bg-emerald-50 text-emerald-700 border-stone-200 hover:border-emerald-400 shadow-xs'
+                    }`}
+                  >
+                    <Plus className="w-3.5 h-3.5" /> {delta}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Formulation Description & Tags */}
+            <div className="space-y-2 text-xs">
+              <span className="font-bold uppercase text-stone-500 tracking-wider block">Ayurvedic Formulation Details</span>
+              <p className={`leading-relaxed p-3 rounded-xl border ${
+                isDark ? 'bg-stone-800/20 border-stone-800 text-stone-300' : 'bg-stone-50 border-stone-200 text-stone-700'
+              }`}>
+                {selectedProductDrillDown.description || 'Handcrafted botanical formulation cold-pressed using pure heritage methods without sulfates, parabens, or synthetic fragrances.'}
+              </p>
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                {(Array.isArray(selectedProductDrillDown.tags) ? selectedProductDrillDown.tags : (selectedProductDrillDown.tags || 'Ayurvedic, Cold-Pressed, Organic').split(',')).map((tag, idx) => (
+                  <span key={idx} className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
+                    isDark ? 'bg-forest-950/40 text-forest-300 border-forest-800/40' : 'bg-forest-50 text-forest-800 border-forest-200'
+                  }`}>
+                    🌿 {typeof tag === 'string' ? tag.trim() : tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-stone-800/40">
+              <button
+                onClick={() => { setSelectedProductDrillDown(null); handleOpenEditProduct(selectedProductDrillDown); }}
+                className="bg-gold-500 hover:bg-gold-600 text-stone-950 font-bold text-xs px-4 py-2 rounded-xl transition-all shadow-sm flex items-center gap-1.5"
+              >
+                <Edit className="w-3.5 h-3.5" /> Edit Full Details
+              </button>
+              <button
+                onClick={() => setSelectedProductDrillDown(null)}
+                className={`text-xs font-bold px-4 py-2 rounded-xl border transition-colors ${
+                  isDark ? 'bg-stone-800 text-stone-300 border-stone-700 hover:bg-stone-700' : 'bg-stone-100 text-stone-700 border-stone-200 hover:bg-stone-200'
+                }`}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========== 3. CUSTOMER DRILL-DOWN MODAL ========== */}
+      {selectedCustomerDetails && (
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[60] flex items-center justify-center p-3 sm:p-4" onClick={() => setSelectedCustomerDetails(null)}>
+          <div
+            className={`rounded-3xl border shadow-2xl max-w-xl w-full p-6 space-y-5 animate-fade-in-scale max-h-[90vh] overflow-y-auto ${
+              isDark ? 'bg-stone-900 border-stone-700 text-stone-100' : 'bg-white border-stone-200 text-stone-900 shadow-2xl'
+            }`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-start justify-between pb-4 border-b border-stone-800/40">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-gold-500 to-gold-700 flex items-center justify-center text-stone-950 font-extrabold text-lg shadow-md">
+                  {selectedCustomerDetails.name?.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider bg-gold-500/20 text-gold-400 border border-gold-500/30 px-2 py-0.5 rounded-full">
+                      Customer Profile
+                    </span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                      selectedCustomerDetails.role === 'admin' ? 'bg-purple-950/40 text-purple-400 border-purple-800/40' : 'bg-emerald-950/40 text-emerald-400 border-emerald-800/40'
+                    }`}>
+                      {selectedCustomerDetails.role === 'admin' ? '👑 Admin' : '👤 Verified Client'}
+                    </span>
+                  </div>
+                  <h3 className={`font-serif font-bold text-lg mt-0.5 ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>
+                    {selectedCustomerDetails.name}
+                  </h3>
+                  <p className="text-xs text-stone-500">{selectedCustomerDetails.email}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedCustomerDetails(null)}
+                className={`p-1.5 rounded-xl border transition-colors ${
+                  isDark ? 'bg-stone-800 text-stone-400 hover:text-stone-200 border-stone-700' : 'bg-stone-100 text-stone-600 hover:text-stone-900 border-stone-200'
+                }`}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* 3-Card Metrics */}
+            {(() => {
+              const customerOrders = ordersList.filter(o => o.userEmail === selectedCustomerDetails.email || o.userId === selectedCustomerDetails.id);
+              const totalSpent = customerOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+              const aov = customerOrders.length ? Math.round(totalSpent / customerOrders.length) : 0;
+              return (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className={`p-3 rounded-2xl border text-center ${isDark ? 'bg-stone-800/40 border-stone-700/40' : 'bg-stone-50 border-stone-200'}`}>
+                      <span className="text-[10px] font-bold uppercase text-stone-500 block">Orders</span>
+                      <p className={`text-base font-extrabold mt-0.5 ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>{customerOrders.length}</p>
+                    </div>
+                    <div className={`p-3 rounded-2xl border text-center ${isDark ? 'bg-stone-800/40 border-stone-700/40' : 'bg-stone-50 border-stone-200'}`}>
+                      <span className="text-[10px] font-bold uppercase text-stone-500 block">Lifetime Value</span>
+                      <p className={`text-base font-extrabold mt-0.5 ${isDark ? 'text-gold-400' : 'text-forest-900'}`}>₹{totalSpent}</p>
+                    </div>
+                    <div className={`p-3 rounded-2xl border text-center ${isDark ? 'bg-stone-800/40 border-stone-700/40' : 'bg-stone-50 border-stone-200'}`}>
+                      <span className="text-[10px] font-bold uppercase text-stone-500 block">Avg Order</span>
+                      <p className="text-base font-extrabold text-emerald-400 mt-0.5">₹{aov}</p>
+                    </div>
+                  </div>
+
+                  {/* Customer Order History */}
+                  <div className="space-y-2">
+                    <span className="text-xs font-bold uppercase text-stone-500 tracking-wider block">Recent Orders History</span>
+                    {customerOrders.length === 0 ? (
+                      <p className="text-xs text-stone-500 text-center py-6">No orders placed by this customer yet.</p>
+                    ) : (
+                      <div className={`rounded-2xl border divide-y overflow-hidden max-h-48 overflow-y-auto ${
+                        isDark ? 'bg-stone-800/20 border-stone-800 divide-stone-800/40' : 'bg-stone-50 border-stone-200 divide-stone-200'
+                      }`}>
+                        {customerOrders.map((ord) => (
+                          <div key={ord.id} className="flex items-center justify-between p-3 text-xs">
+                            <div>
+                              <p className={`font-bold ${isDark ? 'text-stone-200' : 'text-stone-800'}`}>#{ord.orderNumber || ord.id?.slice(-8)}</p>
+                              <p className="text-[10px] text-stone-500">{new Date(ord.createdAt).toLocaleDateString()} • {ord.fulfillmentStatus}</p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span className={`font-bold ${isDark ? 'text-gold-400' : 'text-forest-900'}`}>₹{ord.totalAmount}</span>
+                              <button
+                                onClick={() => { setSelectedCustomerDetails(null); setSelectedOrderDetails(ord); }}
+                                className={`text-[10px] font-bold px-2 py-1 rounded-lg border transition-colors ${
+                                  isDark ? 'bg-stone-800 text-stone-300 hover:text-gold-400 border-stone-700' : 'bg-white text-stone-700 border-stone-300 hover:text-forest-900 shadow-2xs'
+                                }`}
+                              >
+                                View Order
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Actions */}
+            <div className="flex items-center justify-between pt-3 border-t border-stone-800/40">
+              <button
+                onClick={() => handleToggleUserRole(selectedCustomerDetails.id, selectedCustomerDetails.role, selectedCustomerDetails.name)}
+                className={`text-xs font-bold px-4 py-2 rounded-xl border transition-colors ${
+                  isDark ? 'bg-stone-800 text-stone-300 border-stone-700 hover:text-gold-400' : 'bg-stone-100 text-stone-700 border-stone-200 hover:bg-stone-200'
+                }`}
+              >
+                {selectedCustomerDetails.role === 'admin' ? 'Demote to Customer' : 'Promote to Admin'}
+              </button>
+              <button
+                onClick={() => setSelectedCustomerDetails(null)}
+                className="bg-gold-500 hover:bg-gold-600 text-stone-950 font-bold text-xs px-5 py-2 rounded-xl transition-all shadow-sm"
+              >
+                Done
+              </button>
+            </div>
           </div>
         </div>
       )}

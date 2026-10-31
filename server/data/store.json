@@ -825,5 +825,23 @@
         "quantity": 1
       }
     ]
-  }
+  },
+  "settings": {
+    "storeName": "Veera Naturals",
+    "taxRatePercent": 5,
+    "freeShippingThreshold": 499,
+    "standardShippingFee": 50,
+    "supportEmail": "care@veeranaturals.com",
+    "currency": "INR",
+    "currencySymbol": "₹"
+  },
+  "auditLogs": [
+    {
+      "id": "log_1793451054309_xzr7",
+      "action": "SETTINGS_UPDATED",
+      "details": "Updated store configuration rules",
+      "actor": "Veera Administrator",
+      "timestamp": "2026-10-31T12:50:54.309Z"
+    }
+  ]
 }

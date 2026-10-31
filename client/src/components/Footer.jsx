@@ -1,12 +1,16 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Leaf, ShieldCheck, Truck, RefreshCw, Mail, Phone, MapPin, Heart } from 'lucide-react';
 
 export default function Footer() {
+  const location = useLocation();
+  const isHome = location.pathname === '/';
+
   return (
-    <footer className="bg-forest-950 text-ivory-200 border-t border-forest-800">
-      {/* Ethos Trust Badges */}
-      <div className="border-b border-forest-800 py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <footer className="bg-forest-950 dark:bg-[#07110c] text-ivory-200 border-t border-forest-800 dark:border-forest-900 transition-colors">
+      {/* Ethos Trust Badges — Rendered ONLY on Home Page */}
+      {isHome && (
+        <div className="border-b border-forest-800 dark:border-forest-900/80 py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center md:text-left">
           <div className="flex items-center gap-3 justify-center md:justify-start">
             <div className="w-12 h-12 rounded-full bg-forest-900 border border-gold-600/30 flex items-center justify-center text-gold-500">
@@ -49,6 +53,7 @@ export default function Footer() {
           </div>
         </div>
       </div>
+      )}
 
       {/* Main Footer Links */}
       <div className="max-w-7xl mx-auto py-14 px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-5 gap-10">

@@ -168,7 +168,7 @@ export default function ProductsPage() {
                     onClick={() => handleCategoryChange('all')}
                     className={`w-full text-left text-xs px-3 py-2 rounded-lg font-medium transition-colors flex items-center justify-between ${
                       selectedCategory === 'all'
-                        ? 'bg-forest-900 text-gold-400 font-bold'
+                        ? 'bg-forest-900 text-gold-300 font-bold shadow-sm ring-1 ring-gold-500/20'
                         : 'text-stone-700 hover:bg-stone-50'
                     }`}
                   >
@@ -182,7 +182,7 @@ export default function ProductsPage() {
                       onClick={() => handleCategoryChange(cat.slug)}
                       className={`w-full text-left text-xs px-3 py-2 rounded-lg font-medium transition-colors flex items-center justify-between ${
                         selectedCategory === cat.slug
-                          ? 'bg-forest-900 text-gold-400 font-bold'
+                          ? 'bg-forest-900 text-gold-300 font-bold shadow-sm ring-1 ring-gold-500/20'
                           : 'text-stone-700 hover:bg-stone-50'
                       }`}
                     >
@@ -280,7 +280,7 @@ export default function ProductsPage() {
                 </p>
                 <button
                   onClick={resetFilters}
-                  className="mt-4 bg-forest-900 text-gold-400 text-xs font-bold px-4 py-2 rounded-lg"
+                  className="mt-4 bg-forest-900 hover:bg-forest-950 text-gold-300 text-xs font-bold px-4 py-2 rounded-lg shadow-sm transition-colors"
                 >
                   Reset All Filters
                 </button>

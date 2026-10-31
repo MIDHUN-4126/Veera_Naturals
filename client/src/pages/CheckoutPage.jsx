@@ -76,7 +76,7 @@ export default function CheckoutPage() {
           <div className="pt-4 flex flex-col gap-2">
             <Link
               to="/profile"
-              className="w-full bg-forest-900 hover:bg-forest-950 text-gold-400 font-bold py-3 rounded-xl text-xs transition-colors"
+              className="w-full bg-forest-900 hover:bg-forest-950 text-gold-300 font-bold py-3 rounded-xl text-xs transition-colors shadow-md text-center block"
             >
               View Order in Profile
             </Link>

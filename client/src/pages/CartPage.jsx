@@ -61,7 +61,7 @@ export default function CartPage() {
         </p>
         <Link
           to="/shop"
-          className="mt-6 bg-forest-900 hover:bg-forest-950 text-gold-400 font-bold px-6 py-3 rounded-full text-xs transition-all shadow"
+          className="mt-6 bg-forest-900 hover:bg-forest-950 text-gold-300 font-bold px-6 py-3 rounded-full text-xs transition-all shadow-md"
         >
           Explore Handcrafted Formulations
         </Link>
@@ -233,7 +233,7 @@ export default function CartPage() {
                   />
                   <button
                     type="submit"
-                    className="bg-forest-900 hover:bg-forest-950 text-gold-400 text-xs font-bold px-4 py-2.5 rounded-xl transition-colors"
+                    className="bg-forest-900 hover:bg-forest-950 text-gold-300 text-xs font-bold px-4 py-2.5 rounded-xl transition-colors shadow-sm"
                   >
                     Apply
                   </button>

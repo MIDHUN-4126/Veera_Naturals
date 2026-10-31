@@ -7,6 +7,14 @@
     background-color: #F6F0E5;
     color: #1c1917;
     overflow-x: hidden;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  .dark body {
+    background-color: #0c1511;
+    color: #f5f5f4;
+  }
+  .dark {
+    color-scheme: dark;
   }
 }
 
@@ -168,3 +176,90 @@
   border-radius: 50%;
   animation: ripple 2s ease-out infinite;
 }
+
+/* ==================== GLOBAL DARK BOTANICAL THEME ==================== */
+html.dark {
+  color-scheme: dark;
+}
+html.dark body {
+  background-color: #08110d;
+  color: #f1ede4;
+}
+html.dark .bg-ivory-100 {
+  background-color: #08110d !important;
+}
+html.dark .bg-ivory-50 {
+  background-color: #0e1a14 !important;
+}
+html.dark .bg-white {
+  background-color: #111e17 !important;
+  color: #f1ede4;
+}
+html.dark .bg-stone-50,
+html.dark .bg-stone-100 {
+  background-color: #15241b !important;
+}
+html.dark .border-stone-200,
+html.dark .border-stone-100 {
+  border-color: #1c3024 !important;
+}
+html.dark .text-forest-950,
+html.dark .text-forest-900 {
+  color: #f6eedf !important;
+}
+html.dark .text-stone-900,
+html.dark .text-stone-800 {
+  color: #f1ede4 !important;
+}
+html.dark .text-stone-700,
+html.dark .text-stone-600 {
+  color: #cbd5e1 !important;
+}
+html.dark .text-stone-500 {
+  color: #94a3b8 !important;
+}
+html.dark input:not([type="checkbox"]):not([type="radio"]),
+html.dark select,
+html.dark textarea {
+  background-color: #0e1a14;
+  color: #f1ede4;
+  border-color: #233b2d;
+}
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #64748b;
+}
+
+/* ==================== LIGHT THEME GLASS OVERRIDES ==================== */
+html:not(.dark) .glass-card {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+}
+
+html:not(.dark) .glass-sidebar {
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 2px 0 15px -3px rgba(0, 0, 0, 0.04);
+}
+
+html:not(.dark) .admin-scroll::-webkit-scrollbar-track {
+  background: #f5f0e8;
+}
+html:not(.dark) .admin-scroll::-webkit-scrollbar-thumb {
+  background: #d6ccbe;
+}
+html:not(.dark) .admin-scroll::-webkit-scrollbar-thumb:hover {
+  background: #C6A45B;
+}
+
+/* Universal high-contrast safety rule for forest buttons */
+.bg-forest-900,
+.bg-forest-950 {
+  color: #f6eedf !important;
+}
+

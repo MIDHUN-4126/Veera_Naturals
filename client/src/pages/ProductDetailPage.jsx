@@ -96,7 +96,7 @@ export default function ProductDetailPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-ivory-100 p-4">
         <h2 className="font-serif text-2xl font-bold text-forest-950">Formulation Not Found</h2>
-        <Link to="/shop" className="mt-4 text-xs font-bold bg-forest-900 text-gold-400 px-5 py-2.5 rounded-lg">
+        <Link to="/shop" className="mt-4 text-xs font-bold bg-forest-900 hover:bg-forest-950 text-gold-300 px-5 py-2.5 rounded-lg shadow-sm transition-colors">
           Back to Catalogue
         </Link>
       </div>

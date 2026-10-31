@@ -40,7 +40,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-ivory-100 text-stone-900">
+    <div className="min-h-screen bg-ivory-100 dark:bg-[#09120e] text-stone-900 dark:text-stone-100 transition-colors duration-300">
       
       {/* Toast Notification */}
       {addedNotice && (
@@ -157,13 +157,13 @@ export default function HomePage() {
                 </div>
 
                 {/* Floating Badge */}
-                <div className="absolute -bottom-6 -left-6 bg-white text-forest-900 p-4 rounded-2xl shadow-2xl border border-stone-200 hidden sm:flex items-center gap-3 animate-float">
-                  <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-forest-800">
+                <div className="absolute -bottom-6 -left-6 bg-white dark:bg-[#15231c] text-forest-900 dark:text-gold-300 p-4 rounded-2xl shadow-2xl border border-stone-200 dark:border-stone-800 hidden sm:flex items-center gap-3 animate-float">
+                  <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-forest-900 flex items-center justify-center text-forest-800 dark:text-gold-400">
                     <Shield className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-forest-900">Zero Chemicals</p>
-                    <p className="text-[11px] text-stone-500">Paraben &amp; Mineral Oil Free</p>
+                    <p className="text-xs font-bold text-forest-900 dark:text-ivory-100">Zero Chemicals</p>
+                    <p className="text-[11px] text-stone-500 dark:text-stone-400">Paraben &amp; Mineral Oil Free</p>
                   </div>
                 </div>
 
@@ -177,11 +177,11 @@ export default function HomePage() {
       {/* Categories Showcase */}
       <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-12">
-          <span className="text-xs font-bold uppercase tracking-widest text-gold-600">Curated Botanicals</span>
-          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-forest-900 mt-2">
+          <span className="text-xs font-bold uppercase tracking-widest text-gold-600 dark:text-gold-400">Curated Botanicals</span>
+          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-forest-900 dark:text-ivory-100 mt-2">
             Shop by Category
           </h2>
-          <p className="text-stone-600 text-sm mt-3">
+          <p className="text-stone-600 dark:text-stone-400 text-sm mt-3">
             Handcrafted natural treatments for targeted hair, skin, and body wellness.
           </p>
         </div>
@@ -196,16 +196,16 @@ export default function HomePage() {
             <Link
               key={cat.slug}
               to={`/shop?category=${cat.slug}`}
-              className="group bg-white rounded-2xl p-6 text-center border border-stone-200 shadow-sm hover:shadow-xl hover:border-gold-500/50 transition-all hover:-translate-y-1.5"
+              className="group bg-white dark:bg-[#121e17] rounded-2xl p-6 text-center border border-stone-200 dark:border-stone-800 shadow-sm hover:shadow-xl hover:border-gold-500/50 transition-all hover:-translate-y-1.5"
             >
-              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-forest-50 group-hover:bg-gold-50 transition-colors flex items-center justify-center text-3xl shadow-inner">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-forest-50 dark:bg-forest-900/60 group-hover:bg-gold-50 dark:group-hover:bg-gold-950/40 transition-colors flex items-center justify-center text-3xl shadow-inner">
                 {cat.icon}
               </div>
-              <h3 className="font-serif text-lg font-bold text-forest-900 group-hover:text-gold-700 transition-colors">
+              <h3 className="font-serif text-lg font-bold text-forest-900 dark:text-ivory-100 group-hover:text-gold-700 dark:group-hover:text-gold-400 transition-colors">
                 {cat.name}
               </h3>
-              <p className="text-xs text-stone-500 mt-1.5 line-clamp-1">{cat.desc}</p>
-              <span className="inline-block text-[11px] font-bold text-forest-800 group-hover:text-gold-600 mt-4 tracking-wide">
+              <p className="text-xs text-stone-500 dark:text-stone-400 mt-1.5 line-clamp-1">{cat.desc}</p>
+              <span className="inline-block text-[11px] font-bold text-forest-800 dark:text-gold-400 group-hover:text-gold-600 mt-4 tracking-wide">
                 Explore Collection →
               </span>
             </Link>
@@ -214,19 +214,19 @@ export default function HomePage() {
       </section>
 
       {/* Featured Products Grid */}
-      <section className="py-16 bg-white border-y border-stone-200">
+      <section className="py-16 bg-white dark:bg-[#0a130f] border-y border-stone-200 dark:border-stone-800/80 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-12">
             <div>
-              <span className="text-xs font-bold uppercase tracking-widest text-gold-600">Pure Formulations</span>
-              <h2 className="font-serif text-3xl sm:text-4xl font-bold text-forest-900 mt-1">
+              <span className="text-xs font-bold uppercase tracking-widest text-gold-600 dark:text-gold-400">Pure Formulations</span>
+              <h2 className="font-serif text-3xl sm:text-4xl font-bold text-forest-900 dark:text-ivory-100 mt-1">
                 Featured Remedies
               </h2>
             </div>
             <Link
               to="/shop"
-              className="mt-4 md:mt-0 inline-flex items-center gap-1.5 text-sm font-bold text-forest-900 hover:text-gold-600 transition-colors"
+              className="mt-4 md:mt-0 inline-flex items-center gap-1.5 text-sm font-bold text-forest-900 dark:text-gold-400 hover:text-gold-600 dark:hover:text-gold-300 transition-colors"
             >
               <span>View All Products</span>
               <ArrowRight className="w-4 h-4" />
@@ -237,10 +237,10 @@ export default function HomePage() {
             {featuredProducts.slice(0, 4).map((product) => (
               <div
                 key={product.id}
-                className="group bg-ivory-50 rounded-2xl overflow-hidden border border-stone-200 hover:border-gold-500/60 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col"
+                className="group bg-ivory-50 dark:bg-[#121f18] rounded-2xl overflow-hidden border border-stone-200 dark:border-stone-800 hover:border-gold-500/60 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col"
               >
                 {/* Product Image */}
-                <div className="relative aspect-square overflow-hidden bg-stone-100">
+                <div className="relative aspect-square overflow-hidden bg-stone-100 dark:bg-stone-900">
                   <img
                     src={product.images?.[0] || '/marketing/IMG-20260804-WA0013.jpg'}
                     alt={product.name}
@@ -250,7 +250,7 @@ export default function HomePage() {
                     }}
                   />
                   {product.tags && product.tags[0] && (
-                    <span className="absolute top-3 left-3 bg-forest-900 text-gold-300 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shadow">
+                    <span className="absolute top-3 left-3 bg-forest-900 dark:bg-forest-950 text-gold-300 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shadow border border-gold-500/20">
                       {product.tags[0]}
                     </span>
                   )}
@@ -264,16 +264,16 @@ export default function HomePage() {
                 {/* Details */}
                 <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
                   <div>
-                    <span className="text-[11px] font-semibold text-gold-700 uppercase tracking-wider">
+                    <span className="text-[11px] font-semibold text-gold-700 dark:text-gold-400 uppercase tracking-wider">
                       {product.category}
                     </span>
                     <Link
                       to={`/products/${product.slug || product.id}`}
-                      className="block font-serif text-base font-bold text-forest-950 hover:text-gold-700 transition-colors mt-1"
+                      className="block font-serif text-base font-bold text-forest-950 dark:text-ivory-100 hover:text-gold-700 dark:hover:text-gold-300 transition-colors mt-1"
                     >
                       {product.name}
                     </Link>
-                    <p className="text-xs text-stone-500 line-clamp-2 mt-1 font-light">
+                    <p className="text-xs text-stone-500 dark:text-stone-400 line-clamp-2 mt-1 font-light">
                       {product.description}
                     </p>
                   </div>
@@ -282,21 +282,21 @@ export default function HomePage() {
                     {/* Rating */}
                     <div className="flex items-center gap-1 text-amber-500 text-xs mb-2">
                       <Star className="w-3.5 h-3.5 fill-amber-500" />
-                      <span className="font-bold text-stone-800">{product.rating || 4.8}</span>
+                      <span className="font-bold text-stone-800 dark:text-stone-200">{product.rating || 4.8}</span>
                       <span className="text-stone-400">({product.numReviews || 24})</span>
                     </div>
 
                     {/* Price and Cart */}
-                    <div className="flex items-center justify-between pt-2 border-t border-stone-200">
+                    <div className="flex items-center justify-between pt-2 border-t border-stone-200 dark:border-stone-800">
                       <div>
-                        <span className="text-lg font-bold text-forest-900">₹{product.price}</span>
+                        <span className="text-lg font-bold text-forest-900 dark:text-gold-400">₹{product.price}</span>
                         {product.mrp && product.mrp > product.price && (
                           <span className="text-xs text-stone-400 line-through ml-2">₹{product.mrp}</span>
                         )}
                       </div>
                       <button
                         onClick={() => handleAddToCart(product)}
-                        className="bg-forest-900 hover:bg-gold-500 text-white hover:text-forest-950 p-2.5 rounded-xl transition-all shadow hover:shadow-md"
+                        className="bg-forest-900 dark:bg-forest-800 hover:bg-gold-500 dark:hover:bg-gold-500 text-white hover:text-forest-950 p-2.5 rounded-xl transition-all shadow hover:shadow-md"
                         title="Add to Cart"
                       >
                         <ShoppingBag className="w-4 h-4" />
@@ -454,8 +454,8 @@ export default function HomePage() {
       {/* Customer Testimonials */}
       <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-12">
-          <span className="text-xs font-bold uppercase tracking-widest text-gold-600">Real Experiences</span>
-          <h2 className="font-serif text-3xl font-bold text-forest-900 mt-1">
+          <span className="text-xs font-bold uppercase tracking-widest text-gold-600 dark:text-gold-400">Real Experiences</span>
+          <h2 className="font-serif text-3xl font-bold text-forest-900 dark:text-ivory-100 mt-1">
             Loved by Botanical Enthusiasts
           </h2>
         </div>
@@ -484,23 +484,23 @@ export default function HomePage() {
               product: "Pure Rose Water"
             }
           ].map((t, idx) => (
-            <div key={idx} className="bg-white p-7 rounded-2xl border border-stone-200 shadow-sm flex flex-col justify-between">
+            <div key={idx} className="bg-white dark:bg-[#121e17] p-7 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-sm flex flex-col justify-between">
               <div>
                 <div className="flex gap-1 text-amber-500 mb-4">
                   {[...Array(t.rating)].map((_, i) => (
                     <Star key={i} className="w-4 h-4 fill-amber-500" />
                   ))}
                 </div>
-                <p className="text-stone-700 text-sm italic leading-relaxed">
+                <p className="text-stone-700 dark:text-stone-300 text-sm italic leading-relaxed">
                   "{t.quote}"
                 </p>
               </div>
-              <div className="mt-6 pt-4 border-t border-stone-100 flex items-center justify-between">
+              <div className="mt-6 pt-4 border-t border-stone-100 dark:border-stone-800 flex items-center justify-between">
                 <div>
-                  <h4 className="text-sm font-bold text-forest-900">{t.author}</h4>
-                  <p className="text-xs text-stone-500">{t.location}</p>
+                  <h4 className="text-sm font-bold text-forest-900 dark:text-ivory-100">{t.author}</h4>
+                  <p className="text-xs text-stone-500 dark:text-stone-400">{t.location}</p>
                 </div>
-                <span className="text-[11px] font-semibold text-gold-700 bg-gold-50 px-2.5 py-1 rounded-full">
+                <span className="text-[11px] font-semibold text-gold-700 dark:text-gold-300 bg-gold-50 dark:bg-gold-950/60 border border-gold-500/20 px-2.5 py-1 rounded-full">
                   {t.product}
                 </span>
               </div>

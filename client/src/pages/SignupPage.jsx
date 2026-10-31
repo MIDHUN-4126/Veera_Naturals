@@ -186,7 +186,7 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-forest-900 hover:bg-forest-950 text-gold-400 font-bold py-3.5 rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2 mt-2 disabled:opacity-50"
+              className="w-full bg-forest-900 hover:bg-forest-950 text-gold-300 font-bold py-3.5 rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2 mt-2 disabled:opacity-50"
             >
               <span>{loading ? 'Creating Account...' : 'Join Veera Naturals'}</span>
               <ArrowRight className="w-4 h-4" />

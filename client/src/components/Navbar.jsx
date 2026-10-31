@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ShoppingBag, User, LogOut, LayoutDashboard, Search, Menu, X, Sparkles, Heart } from 'lucide-react';
+import { ShoppingBag, User, LogOut, LayoutDashboard, Search, Menu, X, Sparkles, Heart, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { useTheme } from '../context/ThemeContext';
 
 export default function Navbar() {
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const { totalItemsCount } = useCart();
+  const { theme, toggleTheme, isDark } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -112,6 +114,20 @@ export default function Navbar() {
                 <span>BI Dashboard</span>
               </Link>
             )}
+
+            {/* Light / Dark Mode Switcher */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 text-ivory-100 hover:text-gold-400 rounded-full hover:bg-forest-800/80 transition-all flex items-center justify-center relative group"
+              title={isDark ? "Switch to Light Botanical Mode" : "Switch to Dark Obsidian Mode"}
+              aria-label="Toggle Light/Dark Theme"
+            >
+              {isDark ? (
+                <Sun className="w-5 h-5 text-gold-400 group-hover:rotate-45 transition-transform duration-300" />
+              ) : (
+                <Moon className="w-5 h-5 text-ivory-200 group-hover:-rotate-12 transition-transform duration-300" />
+              )}
+            </button>
 
             {/* Shopping Cart Button */}
             <Link
@@ -257,6 +273,18 @@ export default function Navbar() {
               Admin BI Dashboard
             </Link>
           )}
+
+          {/* Mobile Theme Switcher */}
+          <div className="pt-3 border-t border-forest-800 flex items-center justify-between">
+            <span className="text-xs text-ivory-300">Appearance Mode</span>
+            <button
+              onClick={toggleTheme}
+              className="flex items-center gap-2 text-xs font-semibold px-3.5 py-1.5 rounded-full bg-forest-800 text-gold-300 border border-gold-500/30"
+            >
+              {isDark ? <Sun className="w-3.5 h-3.5 text-gold-400" /> : <Moon className="w-3.5 h-3.5 text-ivory-200" />}
+              <span>{isDark ? 'Light UI' : 'Dark UI'}</span>
+            </button>
+          </div>
         </div>
       )}
     </header>
