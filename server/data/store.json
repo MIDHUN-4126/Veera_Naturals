@@ -99,6 +99,28 @@
         }
       ],
       "createdAt": "2026-06-25T16:45:00.000Z"
+    },
+    {
+      "id": "usr_1793527566803_io13ny",
+      "name": "Midhun P",
+      "email": "kanishram4126@gmail.com",
+      "password": "$2a$10$UHLDh91FokDLPqM.WFH69.nEGKjGQP1PRm.hVyrnDvbvlzRhjPpze",
+      "phone": "9489535976",
+      "role": "admin",
+      "avatar": "https://api.dicebear.com/7.x/initials/svg?seed=Midhun%20P&backgroundColor=123E30,C6A45B",
+      "addresses": [
+        {
+          "id": "addr_1793527585006",
+          "label": "Home",
+          "street": "east street",
+          "city": "kondayampalli",
+          "state": "Tamil Nadu",
+          "pincode": "636110",
+          "phone": "9489535976",
+          "isDefault": true
+        }
+      ],
+      "createdAt": "2026-11-01T10:06:06.803Z"
     }
   ],
   "products": [
@@ -727,10 +749,10 @@
       "totalAmount": 990,
       "paymentMethod": "razorpay",
       "paymentStatus": "paid",
-      "fulfillmentStatus": "pending",
+      "fulfillmentStatus": "cancelled",
       "couponCode": "VEERA10",
       "createdAt": "2026-10-29T10:15:00.000Z",
-      "updatedAt": "2026-10-29T10:15:00.000Z"
+      "updatedAt": "2026-11-01T10:04:18.094Z"
     },
     {
       "id": "ord_095",
@@ -906,6 +928,20 @@
     "currencySymbol": "₹"
   },
   "auditLogs": [
+    {
+      "id": "log_1793527617603_cmh1",
+      "action": "USER_ROLE_CHANGED",
+      "details": "Changed role of user \"Midhun P\" (kanishram4126@gmail.com) from user to admin",
+      "actor": "Veera Administrator",
+      "timestamp": "2026-11-01T10:06:57.603Z"
+    },
+    {
+      "id": "log_1793527458098_gw2e",
+      "action": "ORDER_STATUS_UPDATED",
+      "details": "Order VN-842913 status changed: pending ➔ cancelled (Customer: Vikramaditya Roy)",
+      "actor": "Veera Administrator",
+      "timestamp": "2026-11-01T10:04:18.098Z"
+    },
     {
       "id": "log_1793464298359_fros",
       "action": "STOCK_ADJUSTED",

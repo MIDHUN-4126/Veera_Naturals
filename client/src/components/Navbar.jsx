@@ -55,13 +55,17 @@ export default function Navbar() {
     { name: 'Essential Oils', path: '/shop?category=essential-oils' }
   ];
 
+  const isHomePage = location.pathname === '/';
+
   return (
     <header className="sticky top-0 z-50 bg-forest-900/95 backdrop-blur-md text-white border-b border-forest-800 shadow-md transition-all">
-      {/* Top Announcement Bar */}
-      <div className="bg-gradient-to-r from-forest-950 via-forest-900 to-forest-950 text-gold-300 text-xs py-1.5 px-4 text-center border-b border-forest-800 font-medium tracking-wide flex items-center justify-center gap-2">
-        <Sparkles className="w-3.5 h-3.5 text-gold-500 animate-pulse" />
-        <span>Use code <strong>VEERA10</strong> for 10% OFF on all handcrafted botanical formulations | Free shipping above ₹499</span>
-      </div>
+      {/* Top Announcement Bar — Only on Home Page */}
+      {isHomePage && (
+        <div className="bg-gradient-to-r from-forest-950 via-forest-900 to-forest-950 text-gold-300 text-xs py-1.5 px-4 text-center border-b border-forest-800 font-medium tracking-wide flex items-center justify-center gap-2">
+          <Sparkles className="w-3.5 h-3.5 text-gold-500 animate-pulse" />
+          <span>Use code <strong>VEERA10</strong> for 10% OFF on all handcrafted botanical formulations | Free shipping above ₹499</span>
+        </div>
+      )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20 gap-4">
@@ -69,7 +73,7 @@ export default function Navbar() {
           {/* Brand Logo */}
           <Link to="/" className="flex items-center gap-3 group py-1 shrink-0">
             <div className="relative flex items-center justify-center">
-              <div className="w-14 h-14 rounded-2xl bg-white shadow-md flex items-center justify-center p-1.5 border border-gold-400/50 group-hover:scale-105 transition-transform">
+              <div className="w-14 h-14 rounded-2xl shadow-md flex items-center justify-center p-1.5 border border-gold-400/50 group-hover:scale-105 transition-transform" style={{ backgroundColor: '#ffffff' }}>
                 <img
                   src="/images/logo-emblem.png"
                   alt="Veera Naturals"

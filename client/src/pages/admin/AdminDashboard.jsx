@@ -905,7 +905,7 @@ export default function AdminDashboard() {
         {/* Sidebar Header */}
         <div className={`flex items-center gap-3 px-4 py-5 border-b ${isDark ? 'border-stone-800/60' : 'border-stone-200/90'
           } ${sidebarCollapsed ? 'justify-center' : ''}`}>
-          <div className="w-9 h-9 rounded-xl bg-white border border-gold-500/40 flex items-center justify-center flex-shrink-0 shadow-md p-1">
+          <div className="w-9 h-9 rounded-xl border border-gold-500/40 flex items-center justify-center flex-shrink-0 shadow-md p-1" style={{ backgroundColor: '#ffffff' }}>
             <img src="/images/logo-emblem.png" alt="Veera Naturals" className="h-7 w-7 object-contain drop-shadow" onError={(e) => { e.target.src = '/marketing/image3.png'; }} />
           </div>
           {!sidebarCollapsed && (
