@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import axios from 'axios';
-import { Filter, Search, ShoppingBag, Star, SlidersHorizontal, CheckCircle2, RotateCcw } from 'lucide-react';
+import { Search, ShoppingBag, Star, SlidersHorizontal, CheckCircle2, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+
+const PRODUCTS_PER_PAGE = 6;
 
 export default function ProductsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const { addToCart } = useCart();
@@ -15,6 +19,7 @@ export default function ProductsPage() {
   // Filters state
   const selectedCategory = searchParams.get('category') || 'all';
   const searchQuery = searchParams.get('search') || '';
+  const currentPage = Math.max(1, Number.parseInt(searchParams.get('page'), 10) || 1);
   const [minPrice, setMinPrice] = useState(0);
   const [maxPrice, setMaxPrice] = useState(1000);
   const [sortBy, setSortBy] = useState('bestseller');
@@ -23,7 +28,7 @@ export default function ProductsPage() {
   useEffect(() => {
     fetchProducts();
     fetchCategories();
-  }, [searchParams, sortBy, inStockOnly]);
+  }, [searchParams, sortBy, inStockOnly, minPrice, maxPrice]);
 
   const fetchCategories = async () => {
     try {
@@ -47,9 +52,24 @@ export default function ProductsPage() {
       if (sortBy) params.append('sort', sortBy);
       if (inStockOnly) params.append('inStock', 'true');
 
+      params.append('page', currentPage);
+      params.append('limit', PRODUCTS_PER_PAGE);
+
       const res = await axios.get(`/api/products?${params.toString()}`);
       if (res.data.success) {
         setProducts(res.data.products);
+        setTotalProducts(res.data.pagination?.total ?? res.data.count);
+        setTotalPages(res.data.pagination?.totalPages ?? 1);
+
+        if (res.data.pagination?.page && res.data.pagination.page !== currentPage) {
+          const newParams = new URLSearchParams(searchParams);
+          if (res.data.pagination.page === 1) {
+            newParams.delete('page');
+          } else {
+            newParams.set('page', String(res.data.pagination.page));
+          }
+          setSearchParams(newParams, { replace: true });
+        }
       }
     } catch (err) {
       console.error(err);
@@ -65,6 +85,7 @@ export default function ProductsPage() {
     } else {
       newParams.set('category', slug);
     }
+    newParams.delete('page');
     setSearchParams(newParams);
   };
 
@@ -87,6 +108,17 @@ export default function ProductsPage() {
     setMaxPrice(1000);
     setSortBy('bestseller');
     setInStockOnly(false);
+  };
+
+  const goToPage = (page) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (page === 1) {
+      newParams.delete('page');
+    } else {
+      newParams.set('page', String(page));
+    }
+    setSearchParams(newParams);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -173,7 +205,7 @@ export default function ProductsPage() {
                     }`}
                   >
                     <span>All Products</span>
-                    <span className="text-[10px] opacity-70">({products.length})</span>
+                    <span className="text-[10px] opacity-70">({totalProducts})</span>
                   </button>
 
                   {categories.map((cat) => (
@@ -240,7 +272,8 @@ export default function ProductsPage() {
             {/* Sort & Count Bar */}
             <div className="bg-white px-5 py-3.5 rounded-2xl border border-stone-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
               <span className="text-xs text-stone-500 font-medium">
-                Showing <strong className="text-stone-900">{products.length}</strong> natural formulations
+                Showing <strong className="text-stone-900">{products.length}</strong> of{' '}
+                <strong className="text-stone-900">{totalProducts}</strong> natural formulations
               </span>
 
               <div className="flex items-center gap-2 text-xs">
@@ -379,6 +412,46 @@ export default function ProductsPage() {
                   </div>
                 ))}
               </div>
+            )}
+
+            {!loading && products.length > 0 && totalPages > 1 && (
+              <nav className="flex items-center justify-center gap-2 pt-2" aria-label="Product pagination">
+                <button
+                  type="button"
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="inline-flex items-center gap-1 rounded-lg border border-stone-200 bg-white px-3 py-2 text-xs font-semibold text-stone-700 transition-colors hover:border-gold-500 hover:text-forest-900 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+                    <button
+                      type="button"
+                      key={page}
+                      onClick={() => goToPage(page)}
+                      aria-current={page === currentPage ? 'page' : undefined}
+                      className={`h-9 min-w-9 rounded-lg px-2 text-xs font-bold transition-colors ${
+                        page === currentPage
+                          ? 'bg-forest-900 text-gold-300'
+                          : 'border border-stone-200 bg-white text-stone-700 hover:border-gold-500 hover:text-forest-900'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="inline-flex items-center gap-1 rounded-lg border border-stone-200 bg-white px-3 py-2 text-xs font-semibold text-stone-700 transition-colors hover:border-gold-500 hover:text-forest-900 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </nav>
             )}
 
           </main>
