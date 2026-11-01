@@ -10,8 +10,6 @@ exports.getProducts = async (req, res) => {
 
     // Filter by category
     const { category, search, minPrice, maxPrice, sort, inStock } = req.query;
-    const requestedPage = Number.parseInt(req.query.page, 10) || 1;
-    const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 6, 1), 50);
 
     if (category && category !== 'all') {
       products = products.filter(p => p.category.toLowerCase() === category.toLowerCase() || p.categorySlug === category.toLowerCase());
@@ -54,22 +52,10 @@ exports.getProducts = async (req, res) => {
       products.sort((a, b) => (b.salesCount || 0) - (a.salesCount || 0));
     }
 
-    const total = products.length;
-    const totalPages = Math.max(1, Math.ceil(total / limit));
-    const page = Math.min(Math.max(requestedPage, 1), totalPages);
-    const startIndex = (page - 1) * limit;
-    const paginatedProducts = products.slice(startIndex, startIndex + limit);
-
     res.status(200).json({
       success: true,
-      count: total,
-      products: paginatedProducts,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages
-      }
+      count: products.length,
+      products
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
