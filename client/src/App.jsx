@@ -32,7 +32,8 @@ function AdminRoute({ children }) {
 
 export default function App() {
   const location = useLocation();
-  const isAdmin = location.pathname.startsWith('/admin');
+  const isAdmin = location.pathname.startsWith('/admin');
+  const isHome = location.pathname === '/';
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -82,7 +83,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
-      {!isAdmin && <Footer />}
+      {!isAdmin && isHome && <Footer />}
     </div>
   );
 }
