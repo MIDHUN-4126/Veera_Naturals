@@ -248,7 +248,7 @@ exports.deleteUser = async (req, res) => {
 // ==================== PRODUCT MANAGEMENT ====================
 exports.createProduct = async (req, res) => {
   try {
-    const { name, category, price, mrp, costPrice, stock, description, ingredients, volume, tags, images } = req.body;
+    const { name, category, price, mrp, costPrice, stock, description, ingredients, volume, tags, images, image } = req.body;
 
     if (!name || !price || !category) {
       return res.status(400).json({ success: false, message: 'Name, price, and category are required' });
@@ -256,6 +256,7 @@ exports.createProduct = async (req, res) => {
 
     const store = getStore();
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+    const chosenImage = image || (images && images.length ? images[0] : null) || '/marketing/IMG-20260804-WA0013.jpg';
 
     const newProduct = {
       id: 'prd_' + Date.now(),
@@ -272,7 +273,8 @@ exports.createProduct = async (req, res) => {
       description: description || 'Handcrafted botanical formulation with 100% natural organic extracts.',
       ingredients: Array.isArray(ingredients) ? ingredients : (ingredients ? ingredients.split(',').map(s => s.trim()) : ['Cold Pressed Botanical Oils', 'Herbal Extracts']),
       volume: volume || '100 ml',
-      images: images && images.length ? images : ['/marketing/IMG-20260804-WA0013.jpg'],
+      image: chosenImage,
+      images: images && images.length ? images : [chosenImage],
       rating: 5.0,
       numReviews: 0,
       reviews: [],
@@ -301,7 +303,7 @@ exports.updateProduct = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
 
-    const fields = ['name', 'category', 'price', 'mrp', 'costPrice', 'stock', 'description', 'volume', 'tags', 'images', 'ingredients', 'isActive'];
+    const fields = ['name', 'category', 'price', 'mrp', 'costPrice', 'stock', 'description', 'volume', 'tags', 'images', 'image', 'ingredients', 'isActive'];
     fields.forEach(field => {
       if (req.body[field] !== undefined) {
         if (['price', 'mrp', 'costPrice', 'stock'].includes(field)) {
@@ -311,6 +313,15 @@ exports.updateProduct = async (req, res) => {
         }
       }
     });
+
+    if (req.body.image) {
+      product.image = req.body.image;
+      if (!product.images || !product.images.length) {
+        product.images = [req.body.image];
+      } else {
+        product.images[0] = req.body.image;
+      }
+    }
 
     if (req.body.name) {
       product.slug = req.body.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');

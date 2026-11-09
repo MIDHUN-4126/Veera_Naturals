@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
@@ -9,7 +9,8 @@ import {
   LayoutDashboard, Settings, Tag, Activity, Bell, ChevronLeft, LogOut,
   BarChart3, PieChart as PieChartIcon, Layers, Wallet, Store, Truck,
   UserCheck, Crown, Calendar, Hash, Zap, Globe, Sun, Moon, Menu,
-  ChevronsLeft, ChevronsRight, ArrowRight, ArrowLeft, TrendingDown, Box, Heart, Star, ChevronDown, User, RotateCcw
+  ChevronsLeft, ChevronsRight, ArrowRight, ArrowLeft, TrendingDown, Box, Heart, Star, ChevronDown, User, RotateCcw,
+  Upload, Image as ImageIcon
 } from 'lucide-react';
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip,
@@ -228,8 +229,23 @@ export default function AdminDashboard() {
   const [showProductModal, setShowProductModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [productForm, setProductForm] = useState({
-    name: '', category: 'Hair Care', price: '', mrp: '', costPrice: '', stock: 50, volume: '100 ml', description: '', tags: 'bestseller, organic'
+    name: '', category: 'Hair Care', price: '', mrp: '', costPrice: '', stock: 50, volume: '100 ml', description: '', tags: 'bestseller, organic', image: ''
   });
+  const productImageInputRef = useRef(null);
+
+  const handleProductImageFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image file size must be less than 5MB');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setProductForm(prev => ({ ...prev, image: reader.result }));
+    };
+    reader.readAsDataURL(file);
+  };
   const [selectedOrderDetails, setSelectedOrderDetails] = useState(null);
   const [selectedProductDrillDown, setSelectedProductDrillDown] = useState(null);
   const [selectedCustomerDetails, setSelectedCustomerDetails] = useState(null);
@@ -324,17 +340,34 @@ export default function AdminDashboard() {
   // ==================== PRODUCT ACTIONS ====================
   const handleOpenCreateProduct = () => {
     setEditingProduct(null);
-    setProductForm({ name: '', category: 'Hair Care', price: '', mrp: '', costPrice: '', stock: 50, volume: '100 ml', description: 'Handcrafted botanical formula enriched with sacred Ayurvedic herbs.', tags: 'organic, handcrafted' });
+    setProductForm({
+      name: '',
+      category: 'Hair Care',
+      price: '',
+      mrp: '',
+      costPrice: '',
+      stock: 50,
+      volume: '100 ml',
+      description: 'Handcrafted botanical formula enriched with sacred Ayurvedic herbs.',
+      tags: 'organic, handcrafted',
+      image: ''
+    });
     setShowProductModal(true);
   };
 
   const handleOpenEditProduct = (prod) => {
     setEditingProduct(prod);
     setProductForm({
-      name: prod.name, category: prod.category, price: prod.price,
-      mrp: prod.mrp || prod.price, costPrice: prod.costPrice || Math.round(prod.price * 0.35),
-      stock: prod.stock, volume: prod.volume || '100 ml', description: prod.description,
-      tags: Array.isArray(prod.tags) ? prod.tags.join(', ') : (prod.tags || '')
+      name: prod.name,
+      category: prod.category,
+      price: prod.price,
+      mrp: prod.mrp || prod.price,
+      costPrice: prod.costPrice || Math.round(prod.price * 0.35),
+      stock: prod.stock,
+      volume: prod.volume || '100 ml',
+      description: prod.description,
+      tags: Array.isArray(prod.tags) ? prod.tags.join(', ') : (prod.tags || ''),
+      image: prod.image || prod.images?.[0] || ''
     });
     setShowProductModal(true);
   };
@@ -342,7 +375,12 @@ export default function AdminDashboard() {
   const handleSaveProduct = async (e) => {
     e.preventDefault();
     try {
-      const payload = { ...productForm, tags: productForm.tags.split(',').map(t => t.trim()).filter(Boolean) };
+      const payload = {
+        ...productForm,
+        image: productForm.image || '/marketing/IMG-20260804-WA0013.jpg',
+        images: productForm.image ? [productForm.image] : ['/marketing/IMG-20260804-WA0013.jpg'],
+        tags: productForm.tags.split(',').map(t => t.trim()).filter(Boolean)
+      };
       if (editingProduct) {
         const res = await axios.put(`/api/admin/products/${editingProduct.id}`, payload);
         if (res.data.success) showNotification(`Updated product "${res.data.product.name}"`);
@@ -4454,6 +4492,92 @@ export default function AdminDashboard() {
                   <input type="text" value={productForm.volume} onChange={(e) => setProductForm({ ...productForm, volume: e.target.value })}
                     className="w-full bg-stone-800 border border-stone-700 rounded-xl p-3 text-xs text-stone-100 focus:outline-none focus:border-gold-500/50" />
                 </div>
+              </div>
+
+              {/* Product Image Upload Section */}
+              <div>
+                <label className="text-[10px] font-bold uppercase text-stone-500 block mb-1">
+                  Product Image
+                </label>
+                <input
+                  type="file"
+                  ref={productImageInputRef}
+                  onChange={handleProductImageFileChange}
+                  accept="image/*"
+                  className="hidden"
+                />
+
+                {productForm.image ? (
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-stone-800/80 border border-stone-700">
+                    <div className="w-16 h-16 rounded-xl bg-white p-1 border border-gold-500/40 flex items-center justify-center overflow-hidden shrink-0 shadow-md">
+                      <img src={productForm.image} alt="Preview" className="w-full h-full object-contain" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1">
+                        <Check className="w-3 h-3" /> Image Selected
+                      </span>
+                      <p className="text-xs text-stone-300 truncate font-mono mt-0.5">
+                        {productForm.image.startsWith('data:') ? 'Local file uploaded' : productForm.image}
+                      </p>
+                      <div className="flex items-center gap-3 mt-1.5">
+                        <button
+                          type="button"
+                          onClick={() => productImageInputRef.current?.click()}
+                          className="flex items-center gap-1 text-[11px] text-gold-400 hover:text-gold-300 font-bold transition-colors"
+                        >
+                          <Upload className="w-3 h-3" /> Change Image
+                        </button>
+                        <span className="text-stone-600">•</span>
+                        <button
+                          type="button"
+                          onClick={() => setProductForm(prev => ({ ...prev, image: '' }))}
+                          className="flex items-center gap-1 text-[11px] text-rose-400 hover:text-rose-300 font-bold transition-colors"
+                        >
+                          <X className="w-3 h-3" /> Remove
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div
+                      onClick={() => productImageInputRef.current?.click()}
+                      className="border-2 border-dashed border-stone-700 hover:border-gold-500/60 rounded-xl p-3.5 text-center cursor-pointer transition-all bg-stone-800/30 hover:bg-stone-800/60 group"
+                    >
+                      <div className="flex items-center justify-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-stone-800 group-hover:bg-gold-500/20 text-stone-400 group-hover:text-gold-400 flex items-center justify-center transition-colors shrink-0 shadow-sm">
+                          <Upload className="w-5 h-5" />
+                        </div>
+                        <div className="text-left">
+                          <span className="text-xs font-bold text-stone-200 group-hover:text-gold-400 transition-colors block">
+                            Upload Product Image
+                          </span>
+                          <span className="text-[10px] text-stone-400 block">
+                            Click to browse image from device (PNG, JPG, WEBP)
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); productImageInputRef.current?.click(); }}
+                          className="ml-auto bg-gold-500 hover:bg-gold-600 text-stone-950 font-bold text-xs px-3 py-1.5 rounded-lg shadow-sm transition-all"
+                        >
+                          Choose File
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-stone-500 uppercase font-bold shrink-0">Or Image URL:</span>
+                      <input
+                        type="text"
+                        value={productForm.image}
+                        onChange={(e) => setProductForm({ ...productForm, image: e.target.value })}
+                        placeholder="e.g. /products/veera-herbal-hair-oil.png or https://..."
+                        className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-xs text-stone-100 focus:outline-none focus:border-gold-500/50"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div>
