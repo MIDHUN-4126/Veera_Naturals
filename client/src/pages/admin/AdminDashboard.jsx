@@ -189,6 +189,7 @@ export default function AdminDashboard() {
   const [data, setData] = useState(null);
   const [toast, setToast] = useState(null);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [dashboardPage, setDashboardPage] = useState(0); // 0=Executive, 1=Customer, 2=Product, 3=Store
 
   // Timeframe & Overview Filter
   const [timeframe, setTimeframe] = useState('all');
@@ -864,6 +865,295 @@ export default function AdminDashboard() {
 
   const CATEGORY_COLORS = ['#123E30', '#C6A45B', '#C4713B', '#3b82f6', '#8b5cf6', '#10b981'];
 
+  const DASHBOARD_PAGES = ['Executive BI Overview', 'Customer Intelligence', 'Product Analytics', 'Store Operations'];
+
+  // ==================== CUSTOMER INTELLIGENCE DATA ====================
+  const customerIntelData = useMemo(() => {
+    const users = usersList || [];
+    const orders = ordersList || [];
+    if (!users.length) return null;
+
+    // Map each user to their orders
+    const userOrderMap = {};
+    orders.forEach(o => {
+      const key = o.userId || o.userEmail || 'unknown';
+      if (!userOrderMap[key]) userOrderMap[key] = [];
+      userOrderMap[key].push(o);
+    });
+
+    // RFM scoring
+    const now = new Date();
+    const segments = { champions: [], loyal: [], atRisk: [], lost: [] };
+    let totalLTV = 0;
+    let repeatCount = 0;
+    const geoMap = {};
+    const cohortGrid = {};
+    const monthlyAcquisition = {};
+
+    users.filter(u => u.role !== 'admin').forEach(u => {
+      const uOrders = userOrderMap[u.id] || userOrderMap[u.email] || [];
+      const orderCount = uOrders.length;
+      const totalSpent = uOrders.reduce((s, o) => s + (o.totalAmount || 0), 0);
+      totalLTV += totalSpent;
+      if (orderCount >= 2) repeatCount++;
+
+      // Recency
+      let lastOrderDate = null;
+      uOrders.forEach(o => {
+        const d = new Date(o.createdAt);
+        if (!lastOrderDate || d > lastOrderDate) lastOrderDate = d;
+      });
+      const daysSinceLastOrder = lastOrderDate ? Math.floor((now - lastOrderDate) / (1000 * 60 * 60 * 24)) : 999;
+
+      // Segment by RFM
+      if (orderCount >= 3 && daysSinceLastOrder < 30) segments.champions.push(u);
+      else if (orderCount >= 2 && daysSinceLastOrder < 60) segments.loyal.push(u);
+      else if (orderCount >= 1 && daysSinceLastOrder < 90) segments.atRisk.push(u);
+      else segments.lost.push(u);
+
+      // Geo
+      uOrders.forEach(o => {
+        const state = o.shippingAddress?.state || 'Unknown';
+        if (!geoMap[state]) geoMap[state] = { orders: 0, revenue: 0 };
+        geoMap[state].orders++;
+        geoMap[state].revenue += (o.totalAmount || 0);
+      });
+
+      // Cohort
+      const signupMonth = u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short' }) : 'Unknown';
+      if (!cohortGrid[signupMonth]) cohortGrid[signupMonth] = { total: 0, months: {} };
+      cohortGrid[signupMonth].total++;
+      uOrders.forEach(o => {
+        const orderMonth = new Date(o.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+        cohortGrid[signupMonth].months[orderMonth] = (cohortGrid[signupMonth].months[orderMonth] || 0) + 1;
+      });
+
+      // Monthly acquisition
+      const acqMonth = u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-US', { month: 'short' }) : 'Unknown';
+      monthlyAcquisition[acqMonth] = (monthlyAcquisition[acqMonth] || 0) + 1;
+    });
+
+    const nonAdminUsers = users.filter(u => u.role !== 'admin');
+    const totalCustomers = nonAdminUsers.length;
+    const repeatRate = totalCustomers > 0 ? Math.round((repeatCount / totalCustomers) * 100) : 0;
+    const avgLTV = totalCustomers > 0 ? Math.round(totalLTV / totalCustomers) : 0;
+    const churnCount = segments.atRisk.length + segments.lost.length;
+    const churnRate = totalCustomers > 0 ? Math.round((churnCount / totalCustomers) * 100) : 0;
+
+    // Top spenders
+    const topSpenders = nonAdminUsers.map(u => {
+      const uOrders = userOrderMap[u.id] || userOrderMap[u.email] || [];
+      return {
+        ...u,
+        ordersCount: uOrders.length,
+        totalSpent: uOrders.reduce((s, o) => s + (o.totalAmount || 0), 0),
+        lastOrder: uOrders.length > 0 ? uOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0].createdAt : null
+      };
+    }).sort((a, b) => b.totalSpent - a.totalSpent).slice(0, 10);
+
+    // Repeat vs one-time revenue
+    const repeatRevenue = nonAdminUsers.reduce((sum, u) => {
+      const uOrders = userOrderMap[u.id] || userOrderMap[u.email] || [];
+      if (uOrders.length >= 2) return sum + uOrders.reduce((s, o) => s + (o.totalAmount || 0), 0);
+      return sum;
+    }, 0);
+    const oneTimeRevenue = totalLTV - repeatRevenue;
+
+    // Geo sorted
+    const geoData = Object.entries(geoMap).map(([state, d]) => ({ state, ...d })).sort((a, b) => b.revenue - a.revenue);
+
+    // Acquisition trend
+    const acqTrend = ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'].map(m => ({ month: m, count: monthlyAcquisition[m] || 0 }));
+
+    return {
+      totalCustomers, repeatRate, avgLTV, churnRate, churnCount,
+      segments, topSpenders, geoData, acqTrend,
+      repeatRevenue, oneTimeRevenue, cohortGrid
+    };
+  }, [usersList, ordersList]);
+
+  // ==================== PRODUCT ANALYTICS DATA ====================
+  const productAnalyticsData = useMemo(() => {
+    const products = productsList || [];
+    const orders = ordersList || [];
+    if (!products.length) return null;
+
+    // Per-product sales from orders
+    const prodSalesMap = {};
+    orders.forEach(o => {
+      (o.items || []).forEach(item => {
+        const pid = item.productId || item.name;
+        if (!prodSalesMap[pid]) prodSalesMap[pid] = { unitsSold: 0, revenue: 0 };
+        prodSalesMap[pid].unitsSold += (item.quantity || 1);
+        prodSalesMap[pid].revenue += (item.price || 0) * (item.quantity || 1);
+      });
+    });
+
+    // Profitability matrix
+    const profMatrix = products.filter(p => p.isActive !== false).map(p => {
+      const sales = prodSalesMap[p.id] || prodSalesMap[p.name] || { unitsSold: p.salesCount || 0, revenue: (p.salesCount || 0) * (p.price || 0) };
+      const margin = p.price && p.costPrice ? Math.round(((p.price - p.costPrice) / p.price) * 100) : 65;
+      return {
+        id: p.id, name: p.name, category: p.category,
+        price: p.price, costPrice: p.costPrice || Math.round(p.price * 0.35),
+        stock: p.stock || 0, lowStockThreshold: p.lowStockThreshold || 10,
+        margin, unitsSold: sales.unitsSold, revenue: sales.revenue,
+        rating: p.rating || 0, numReviews: p.numReviews || 0,
+        image: p.image || p.images?.[0]
+      };
+    });
+
+    const activeSkus = profMatrix.length;
+    const avgMargin = profMatrix.length > 0 ? Math.round(profMatrix.reduce((s, p) => s + p.margin, 0) / profMatrix.length) : 0;
+    const totalUnitsSold = profMatrix.reduce((s, p) => s + p.unitsSold, 0);
+    const totalStock = profMatrix.reduce((s, p) => s + p.stock, 0);
+    const turnover = totalStock > 0 ? (totalUnitsSold / totalStock).toFixed(1) : '0.0';
+    const deadStock = profMatrix.filter(p => p.unitsSold === 0).length;
+
+    // Category performance
+    const catPerf = {};
+    profMatrix.forEach(p => {
+      if (!catPerf[p.category]) catPerf[p.category] = { revenue: 0, units: 0, count: 0, totalStock: 0 };
+      catPerf[p.category].revenue += p.revenue;
+      catPerf[p.category].units += p.unitsSold;
+      catPerf[p.category].count++;
+      catPerf[p.category].totalStock += p.stock;
+    });
+    const categoryPerformance = Object.entries(catPerf).map(([cat, d]) => ({ category: cat, ...d, turnover: d.totalStock > 0 ? (d.units / d.totalStock).toFixed(1) : '0' }));
+
+    // Cross-sell pairs
+    const pairCounts = {};
+    let multiItemOrders = 0;
+    orders.forEach(o => {
+      const items = o.items || [];
+      if (items.length >= 2) {
+        multiItemOrders++;
+        for (let i = 0; i < items.length; i++) {
+          for (let j = i + 1; j < items.length; j++) {
+            const pair = [items[i].name, items[j].name].sort().join(' + ');
+            pairCounts[pair] = (pairCounts[pair] || 0) + 1;
+          }
+        }
+      }
+    });
+    const crossSellPairs = Object.entries(pairCounts)
+      .map(([pair, count]) => ({ pair, count, pct: multiItemOrders > 0 ? Math.round((count / multiItemOrders) * 100) : 0 }))
+      .sort((a, b) => b.count - a.count).slice(0, 5);
+
+    // Rating distribution
+    const ratingDist = [0, 0, 0, 0, 0]; // 1-5 stars
+    products.forEach(p => {
+      (p.reviews || []).forEach(r => {
+        const star = Math.max(1, Math.min(5, Math.round(r.rating || 0)));
+        ratingDist[star - 1]++;
+      });
+    });
+    const totalReviews = ratingDist.reduce((s, v) => s + v, 0);
+
+    // Price vs sales
+    const priceVsSales = profMatrix.map(p => ({ name: p.name, price: p.price, unitsSold: p.unitsSold })).sort((a, b) => a.price - b.price);
+
+    return {
+      activeSkus, avgMargin, turnover, deadStock,
+      profMatrix, categoryPerformance, crossSellPairs,
+      ratingDist, totalReviews, priceVsSales
+    };
+  }, [productsList, ordersList]);
+
+  // ==================== STORE OPERATIONS DATA ====================
+  const storeOpsData = useMemo(() => {
+    const orders = ordersList || [];
+    if (!orders.length) return null;
+
+    const totalOrders = orders.length;
+    const statusMap = { pending: 0, processing: 0, shipped: 0, delivered: 0, cancelled: 0 };
+    let totalFulfillmentDays = 0;
+    let fulfilledCount = 0;
+    let couponOrders = 0;
+    const couponMap = {};
+    const dayOfWeekRev = [0, 0, 0, 0, 0, 0, 0]; // Sun-Sat
+    const dayOfWeekLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const dailyVolume = {};
+    const paymentTrend = {};
+    const regionMap = {};
+    let discountedRevenue = 0;
+    let nonDiscountedRevenue = 0;
+
+    orders.forEach(o => {
+      const st = (o.fulfillmentStatus || 'pending').toLowerCase();
+      if (statusMap[st] !== undefined) statusMap[st]++;
+
+      if (st === 'delivered' && o.createdAt && o.updatedAt) {
+        const days = Math.max(0, (new Date(o.updatedAt) - new Date(o.createdAt)) / (1000 * 60 * 60 * 24));
+        totalFulfillmentDays += days;
+        fulfilledCount++;
+      }
+
+      if (o.couponCode) {
+        couponOrders++;
+        const code = o.couponCode.toUpperCase();
+        if (!couponMap[code]) couponMap[code] = { count: 0, totalDiscount: 0, revenue: 0 };
+        couponMap[code].count++;
+        couponMap[code].totalDiscount += (o.discount || 0);
+        couponMap[code].revenue += (o.totalAmount || 0);
+        discountedRevenue += (o.totalAmount || 0);
+      } else {
+        nonDiscountedRevenue += (o.totalAmount || 0);
+      }
+
+      if (o.createdAt) {
+        const d = new Date(o.createdAt);
+        dayOfWeekRev[d.getDay()] += (o.totalAmount || 0);
+
+        const dateKey = d.toISOString().slice(0, 10);
+        if (!dailyVolume[dateKey]) dailyVolume[dateKey] = 0;
+        dailyVolume[dateKey]++;
+
+        const monthKey = d.toLocaleDateString('en-US', { month: 'short' });
+        const pm = (o.paymentMethod || '').toLowerCase();
+        const pmLabel = (pm.includes('cod') || pm.includes('cash')) ? 'COD' : 'Prepaid';
+        if (!paymentTrend[monthKey]) paymentTrend[monthKey] = { COD: 0, Prepaid: 0 };
+        paymentTrend[monthKey][pmLabel] += (o.totalAmount || 0);
+      }
+
+      const state = o.shippingAddress?.state || 'Unknown';
+      if (!regionMap[state]) regionMap[state] = { orders: 0, totalDays: 0, deliveredCount: 0 };
+      regionMap[state].orders++;
+      if (st === 'delivered' && o.createdAt && o.updatedAt) {
+        regionMap[state].totalDays += Math.max(0, (new Date(o.updatedAt) - new Date(o.createdAt)) / (1000 * 60 * 60 * 24));
+        regionMap[state].deliveredCount++;
+      }
+    });
+
+    const fulfillmentRate = totalOrders > 0 ? Math.round((statusMap.delivered / totalOrders) * 100) : 0;
+    const avgFulfillmentTime = fulfilledCount > 0 ? (totalFulfillmentDays / fulfilledCount).toFixed(1) : '—';
+    const cancelRate = totalOrders > 0 ? Math.round((statusMap.cancelled / totalOrders) * 100) : 0;
+    const couponRedemptionRate = totalOrders > 0 ? Math.round((couponOrders / totalOrders) * 100) : 0;
+
+    const couponPerf = Object.entries(couponMap).map(([code, d]) => ({ code, ...d })).sort((a, b) => b.count - a.count);
+
+    const dayOfWeekData = dayOfWeekLabels.map((label, i) => ({ day: label, revenue: dayOfWeekRev[i] }));
+
+    // Daily volume for last 30 days
+    const dailyData = Object.entries(dailyVolume).sort().slice(-30).map(([date, count]) => ({ date: date.slice(5), count }));
+
+    const paymentTrendData = ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'].map(m => ({
+      month: m, COD: paymentTrend[m]?.COD || 0, Prepaid: paymentTrend[m]?.Prepaid || 0
+    }));
+
+    const regionData = Object.entries(regionMap).map(([state, d]) => ({
+      state, orders: d.orders,
+      avgDays: d.deliveredCount > 0 ? (d.totalDays / d.deliveredCount).toFixed(1) : '—'
+    })).sort((a, b) => b.orders - a.orders);
+
+    return {
+      totalOrders, fulfillmentRate, avgFulfillmentTime, cancelRate,
+      couponRedemptionRate, statusMap, couponPerf, dayOfWeekData,
+      dailyData, paymentTrendData, regionData,
+      discountedRevenue, nonDiscountedRevenue
+    };
+  }, [ordersList]);
+
   // ==================== SIDEBAR NAV CONFIG ====================
   const sidebarItems = [
     { id: 'analytics', label: 'BI Overview', icon: LayoutDashboard, badge: null },
@@ -1303,7 +1593,87 @@ export default function AdminDashboard() {
           {activeTab === 'analytics' && data && (
             <div className="space-y-6 animate-fade-in">
 
-              {/* Filter Controls Bar */}
+
+              {/* ==================== MULTI-DASHBOARD CAROUSEL CONTROLLER ==================== */}
+              <div className={`p-4 rounded-2xl border transition-all ${
+                isDark ? 'bg-gradient-to-r from-stone-900/90 via-stone-900/60 to-stone-900/90 border-stone-800/80 shadow-lg' : 'bg-white border-stone-200/90 shadow-sm'
+              }`}>
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    {/* Prev Arrow */}
+                    <button
+                      onClick={() => setDashboardPage(prev => Math.max(0, prev - 1))}
+                      disabled={dashboardPage === 0}
+                      className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-all ${
+                        dashboardPage === 0
+                          ? 'opacity-30 cursor-not-allowed border-stone-300 dark:border-stone-800 text-stone-400'
+                          : isDark
+                            ? 'bg-stone-800 text-gold-400 border-gold-500/40 hover:bg-gold-500/20 shadow-md'
+                            : 'bg-stone-100 text-forest-900 border-stone-300 hover:bg-forest-900 hover:text-gold-300 shadow-sm'
+                      }`}
+                      title="Previous Dashboard"
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${
+                          isDark ? 'bg-gold-500/10 text-gold-400 border border-gold-500/20' : 'bg-forest-50 text-forest-900 border border-forest-200'
+                        }`}>
+                          Dashboard {dashboardPage + 1} of 4
+                        </span>
+                        <span className="text-xs text-stone-400">• Executive Suite</span>
+                      </div>
+                      <h2 className={`font-serif text-xl font-bold mt-0.5 ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>
+                        {DASHBOARD_PAGES[dashboardPage]}
+                      </h2>
+                    </div>
+
+                    {/* Next Arrow */}
+                    <button
+                      onClick={() => setDashboardPage(prev => Math.min(3, prev + 1))}
+                      disabled={dashboardPage === 3}
+                      className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-all ${
+                        dashboardPage === 3
+                          ? 'opacity-30 cursor-not-allowed border-stone-300 dark:border-stone-800 text-stone-400'
+                          : isDark
+                            ? 'bg-stone-800 text-gold-400 border-gold-500/40 hover:bg-gold-500/20 shadow-md'
+                            : 'bg-stone-100 text-forest-900 border-stone-300 hover:bg-forest-900 hover:text-gold-300 shadow-sm'
+                      }`}
+                      title="Next Dashboard"
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  {/* Direct Switcher Tabs / Pills */}
+                  <div className={`flex items-center gap-1.5 p-1 rounded-xl border overflow-x-auto max-w-full ${
+                    isDark ? 'bg-stone-950/60 border-stone-800' : 'bg-stone-100 border-stone-200'
+                  }`}>
+                    {DASHBOARD_PAGES.map((title, idx) => (
+                      <button
+                        key={title}
+                        onClick={() => setDashboardPage(idx)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                          dashboardPage === idx
+                            ? (isDark ? 'bg-gold-500 text-stone-950 shadow-md' : 'bg-forest-900 text-gold-300 shadow-sm')
+                            : (isDark ? 'text-stone-400 hover:text-stone-200 hover:bg-stone-800/40' : 'text-stone-600 hover:text-stone-950 hover:bg-white')
+                        }`}
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: dashboardPage === idx ? (isDark ? '#000' : '#C6A45B') : '#888' }} />
+                        <span>{title}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+
+              {/* ==================== DASHBOARD PAGE 0: EXECUTIVE OVERVIEW (EXISTING) ==================== */}
+              {dashboardPage === 0 && (
+                <div className="space-y-6">
+                  {/* Filter Controls Bar */}
               <div className="flex flex-wrap items-center justify-between gap-3">
                 {/* Timeframe Filter */}
                 <div className={`flex items-center gap-1.5 p-1 rounded-xl border text-xs ${isDark ? 'bg-stone-900/60 border-stone-800/60' : 'bg-white border-stone-300 shadow-xs'
@@ -2145,6 +2515,698 @@ export default function AdminDashboard() {
                   </button>
                 </div>
               </div>
+                </div>
+              )}
+
+
+              {/* ==================== DASHBOARD PAGE 1: CUSTOMER INTELLIGENCE (CRM) ==================== */}
+              {dashboardPage === 1 && (
+                <div className="space-y-6 animate-fade-in">
+                  {/* Top Customer KPI Cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className={`glass-card rounded-2xl p-5 hover-lift border transition-all ${isDark ? 'hover:border-gold-500/40' : 'hover:border-forest-600/40 shadow-xs'}`}>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="text-xs text-stone-500 font-bold uppercase tracking-wider">Total Customers</p>
+                          <h3 className={`font-serif text-3xl font-extrabold mt-1 ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>
+                            {customerIntelData?.totalCustomers || 0}
+                          </h3>
+                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-forest-900/10 dark:bg-gold-500/10 flex items-center justify-center text-forest-800 dark:text-gold-400">
+                          <Users className="w-5 h-5" />
+                        </div>
+                      </div>
+                      <div className="mt-3 flex items-center gap-1.5 text-xs text-emerald-500 font-semibold">
+                        <TrendingUp className="w-3.5 h-3.5" />
+                        <span>{usersList.length} total user accounts registered</span>
+                      </div>
+                    </div>
+
+                    <div className={`glass-card rounded-2xl p-5 hover-lift border transition-all ${isDark ? 'hover:border-gold-500/40' : 'hover:border-forest-600/40 shadow-xs'}`}>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="text-xs text-stone-500 font-bold uppercase tracking-wider">Repeat Customer Rate</p>
+                          <h3 className={`font-serif text-3xl font-extrabold mt-1 ${isDark ? 'text-gold-400' : 'text-forest-900'}`}>
+                            {customerIntelData?.repeatRate || 0}%
+                          </h3>
+                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-gold-500/10 flex items-center justify-center text-gold-500">
+                          <RotateCcw className="w-5 h-5" />
+                        </div>
+                      </div>
+                      <div className="mt-3 flex items-center gap-1.5 text-xs text-stone-500 font-medium">
+                        <UserCheck className="w-3.5 h-3.5 text-gold-500" />
+                        <span>Customers with ≥ 2 fulfilled orders</span>
+                      </div>
+                    </div>
+
+                    <div className={`glass-card rounded-2xl p-5 hover-lift border transition-all ${isDark ? 'hover:border-gold-500/40' : 'hover:border-forest-600/40 shadow-xs'}`}>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="text-xs text-stone-500 font-bold uppercase tracking-wider">Avg Lifetime Value (LTV)</p>
+                          <h3 className={`font-serif text-3xl font-extrabold mt-1 ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>
+                            ₹{(customerIntelData?.avgLTV || 0).toLocaleString()}
+                          </h3>
+                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                          <Wallet className="w-5 h-5" />
+                        </div>
+                      </div>
+                      <div className="mt-3 flex items-center gap-1.5 text-xs text-emerald-500 font-semibold">
+                        <ArrowUpRight className="w-3.5 h-3.5" />
+                        <span>Net spending per unique patron</span>
+                      </div>
+                    </div>
+
+                    <div className={`glass-card rounded-2xl p-5 hover-lift border transition-all ${isDark ? 'hover:border-gold-500/40' : 'hover:border-forest-600/40 shadow-xs'}`}>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="text-xs text-stone-500 font-bold uppercase tracking-wider">Churn Risk Rate</p>
+                          <h3 className={`font-serif text-3xl font-extrabold mt-1 ${isDark ? 'text-rose-400' : 'text-rose-600'}`}>
+                            {customerIntelData?.churnRate || 0}%
+                          </h3>
+                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-500">
+                          <AlertTriangle className="w-5 h-5" />
+                        </div>
+                      </div>
+                      <div className="mt-3 flex items-center gap-1.5 text-xs text-rose-500 font-medium">
+                        <span>{customerIntelData?.churnCount || 0} patrons without orders in &gt;60 days</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Customer Charts Row 1 */}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    {/* Monthly Acquisition AreaChart */}
+                    <div className={`lg:col-span-8 glass-card rounded-2xl p-6 border ${isDark ? 'border-stone-800/80' : 'border-stone-200/90 shadow-sm'}`}>
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h3 className={`font-serif text-base font-bold ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>
+                            Customer Acquisition Velocity
+                          </h3>
+                          <p className="text-xs text-stone-500">New registered patrons joined per month</p>
+                        </div>
+                        <span className={`text-xs px-2.5 py-1 rounded-full font-bold ${isDark ? 'bg-gold-500/20 text-gold-400' : 'bg-forest-100 text-forest-900'}`}>
+                          Organic + Social
+                        </span>
+                      </div>
+                      <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={customerIntelData?.acqTrend || []}>
+                            <defs>
+                              <linearGradient id="acqGrad" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#C6A45B" stopOpacity={0.8}/>
+                                <stop offset="95%" stopColor="#C6A45B" stopOpacity={0}/>
+                              </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#292524' : '#e7e5e4'} />
+                            <XAxis dataKey="month" stroke={isDark ? '#a8a29e' : '#78716c'} tick={{ fontSize: 12 }} />
+                            <YAxis stroke={isDark ? '#a8a29e' : '#78716c'} tick={{ fontSize: 12 }} allowDecimals={false} />
+                            <Tooltip
+                              contentStyle={{
+                                backgroundColor: isDark ? '#1c1917' : '#ffffff',
+                                borderColor: isDark ? '#44403c' : '#d6d3d1',
+                                borderRadius: '12px'
+                              }}
+                            />
+                            <Area type="monotone" dataKey="count" stroke="#C6A45B" strokeWidth={2.5} fillOpacity={1} fill="url(#acqGrad)" name="New Customers" />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+
+                    {/* RFM Customer Segmentation Donut */}
+                    <div className={`lg:col-span-4 glass-card rounded-2xl p-6 border ${isDark ? 'border-stone-800/80' : 'border-stone-200/90 shadow-sm'}`}>
+                      <h3 className={`font-serif text-base font-bold ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>
+                        Patron Segmentation (RFM)
+                      </h3>
+                      <p className="text-xs text-stone-500 mb-2">Recency, Frequency & Monetary tiers</p>
+                      
+                      <div className="h-48 relative">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={[
+                                { name: 'Champions (3+ orders, <30d)', value: customerIntelData?.segments?.champions?.length || 1, color: '#10b981' },
+                                { name: 'Loyal Patrons (2+ orders)', value: customerIntelData?.segments?.loyal?.length || 1, color: '#C6A45B' },
+                                { name: 'At-Risk (60-90d silent)', value: customerIntelData?.segments?.atRisk?.length || 1, color: '#f59e0b' },
+                                { name: 'Lost (&gt;90d inactive)', value: customerIntelData?.segments?.lost?.length || 1, color: '#ef4444' }
+                              ]}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={45}
+                              outerRadius={70}
+                              paddingAngle={4}
+                              dataKey="value"
+                            >
+                              {[
+                                { color: '#10b981' },
+                                { color: '#C6A45B' },
+                                { color: '#f59e0b' },
+                                { color: '#ef4444' }
+                              ].map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} />
+                              ))}
+                            </Pie>
+                            <Tooltip contentStyle={{ backgroundColor: isDark ? '#1c1917' : '#ffffff', borderRadius: '10px' }} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+
+                      {/* Segmentation legend */}
+                      <div className="space-y-1.5 text-xs mt-2">
+                        <div className="flex items-center justify-between">
+                          <span className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Champions</span>
+                          <span className="font-bold">{customerIntelData?.segments?.champions?.length || 0}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> Loyal</span>
+                          <span className="font-bold">{customerIntelData?.segments?.loyal?.length || 0}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-yellow-500" /> At-Risk</span>
+                          <span className="font-bold">{customerIntelData?.segments?.atRisk?.length || 0}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-red-500" /> Lost / Dormant</span>
+                          <span className="font-bold">{customerIntelData?.segments?.lost?.length || 0}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Customer Charts Row 2: Top Spenders & Geographic Distribution */}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    {/* Top Spenders Table */}
+                    <div className={`lg:col-span-7 glass-card rounded-2xl p-6 border ${isDark ? 'border-stone-800/80' : 'border-stone-200/90 shadow-sm'}`}>
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h3 className={`font-serif text-base font-bold ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>
+                            High-Value Patrons Leaderboard
+                          </h3>
+                          <p className="text-xs text-stone-500">Top patrons ranked by total lifetime spend</p>
+                        </div>
+                        <button
+                          onClick={() => setActiveTab('users')}
+                          className="text-xs font-bold text-gold-500 hover:underline flex items-center gap-1"
+                        >
+                          View All Customers <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs">
+                          <thead>
+                            <tr className={`border-b ${isDark ? 'border-stone-800 text-stone-400' : 'border-stone-200 text-stone-600'}`}>
+                              <th className="py-2.5 font-bold">Patron</th>
+                              <th className="py-2.5 font-bold text-center">Orders</th>
+                              <th className="py-2.5 font-bold text-right">Lifetime Spend</th>
+                              <th className="py-2.5 font-bold text-center">Action</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-stone-800/40">
+                            {(customerIntelData?.topSpenders || []).map((u, i) => (
+                              <tr key={u.id || i} className="hover:bg-stone-500/5 transition-colors">
+                                <td className="py-3 flex items-center gap-2.5">
+                                  <div className="w-7 h-7 rounded-full bg-gold-500/20 text-gold-400 font-bold flex items-center justify-center text-xs">
+                                    {u.name?.charAt(0) || 'P'}
+                                  </div>
+                                  <div>
+                                    <p className={`font-bold ${isDark ? 'text-stone-200' : 'text-stone-900'}`}>{u.name}</p>
+                                    <p className="text-[10px] text-stone-500">{u.email}</p>
+                                  </div>
+                                </td>
+                                <td className="py-3 text-center">
+                                  <span className={`px-2 py-0.5 rounded-full font-bold text-[11px] ${isDark ? 'bg-stone-800 text-stone-300' : 'bg-stone-100 text-stone-800'}`}>
+                                    {u.ordersCount || 0}
+                                  </span>
+                                </td>
+                                <td className="py-3 text-right font-serif font-bold text-emerald-500">
+                                  ₹{(u.totalSpent || 0).toLocaleString()}
+                                </td>
+                                <td className="py-3 text-center">
+                                  <button
+                                    onClick={() => setSelectedCustomerDetails(u)}
+                                    className="p-1 hover:text-gold-400 transition-colors"
+                                    title="View Profile"
+                                  >
+                                    <Eye className="w-4 h-4" />
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Geographic Distribution */}
+                    <div className={`lg:col-span-5 glass-card rounded-2xl p-6 border ${isDark ? 'border-stone-800/80' : 'border-stone-200/90 shadow-sm'}`}>
+                      <h3 className={`font-serif text-base font-bold ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>
+                        Geographic Distribution
+                      </h3>
+                      <p className="text-xs text-stone-500 mb-4">Orders &amp; revenue by destination state</p>
+
+                      <div className="space-y-3">
+                        {(customerIntelData?.geoData || []).slice(0, 6).map((g, idx) => {
+                          const maxRev = (customerIntelData?.geoData?.[0]?.revenue) || 1;
+                          const pct = Math.round((g.revenue / maxRev) * 100);
+                          return (
+                            <div key={g.state || idx} className="space-y-1">
+                              <div className="flex items-center justify-between text-xs">
+                                <span className={`font-semibold ${isDark ? 'text-stone-200' : 'text-stone-800'}`}>{g.state}</span>
+                                <span className="font-serif font-bold text-gold-500">₹{(g.revenue || 0).toLocaleString()} ({g.orders} orders)</span>
+                              </div>
+                              <div className="h-2 rounded-full bg-stone-800/40 overflow-hidden">
+                                <div className="h-full bg-gradient-to-r from-forest-800 to-gold-500 rounded-full" style={{ width: `${pct}%` }} />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+
+
+              {/* ==================== DASHBOARD PAGE 2: PRODUCT ANALYTICS & PROFITABILITY ==================== */}
+              {dashboardPage === 2 && (
+                <div className="space-y-6 animate-fade-in">
+                  {/* Top Product KPI Cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className={`glass-card rounded-2xl p-5 hover-lift border transition-all ${isDark ? 'hover:border-gold-500/40' : 'hover:border-forest-600/40 shadow-xs'}`}>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="text-xs text-stone-500 font-bold uppercase tracking-wider">Active Formulations</p>
+                          <h3 className={`font-serif text-3xl font-extrabold mt-1 ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>
+                            {productAnalyticsData?.activeSkus || 0}
+                          </h3>
+                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-forest-900/10 dark:bg-gold-500/10 flex items-center justify-center text-forest-800 dark:text-gold-400">
+                          <Package className="w-5 h-5" />
+                        </div>
+                      </div>
+                      <div className="mt-3 flex items-center gap-1.5 text-xs text-stone-400">
+                        <span>100% handcrafted botanical catalog</span>
+                      </div>
+                    </div>
+
+                    <div className={`glass-card rounded-2xl p-5 hover-lift border transition-all ${isDark ? 'hover:border-gold-500/40' : 'hover:border-forest-600/40 shadow-xs'}`}>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="text-xs text-stone-500 font-bold uppercase tracking-wider">Portfolio Gross Margin</p>
+                          <h3 className={`font-serif text-3xl font-extrabold mt-1 ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>
+                            {productAnalyticsData?.avgMargin || 0}%
+                          </h3>
+                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                          <TrendingUp className="w-5 h-5" />
+                        </div>
+                      </div>
+                      <div className="mt-3 flex items-center gap-1.5 text-xs text-emerald-500 font-semibold">
+                        <span>Healthy retail pricing power</span>
+                      </div>
+                    </div>
+
+                    <div className={`glass-card rounded-2xl p-5 hover-lift border transition-all ${isDark ? 'hover:border-gold-500/40' : 'hover:border-forest-600/40 shadow-xs'}`}>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="text-xs text-stone-500 font-bold uppercase tracking-wider">Inventory Turnover</p>
+                          <h3 className={`font-serif text-3xl font-extrabold mt-1 ${isDark ? 'text-gold-400' : 'text-forest-900'}`}>
+                            {productAnalyticsData?.turnover || '0.0'}x
+                          </h3>
+                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-gold-500/10 flex items-center justify-center text-gold-500">
+                          <RefreshCw className="w-5 h-5" />
+                        </div>
+                      </div>
+                      <div className="mt-3 flex items-center gap-1.5 text-xs text-stone-400">
+                        <span>Units sold / on-hand inventory</span>
+                      </div>
+                    </div>
+
+                    <div className={`glass-card rounded-2xl p-5 hover-lift border transition-all ${isDark ? 'hover:border-gold-500/40' : 'hover:border-forest-600/40 shadow-xs'}`}>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="text-xs text-stone-500 font-bold uppercase tracking-wider">Dead Stock / Idle SKUs</p>
+                          <h3 className={`font-serif text-3xl font-extrabold mt-1 ${isDark ? 'text-rose-400' : 'text-rose-600'}`}>
+                            {productAnalyticsData?.deadStock || 0}
+                          </h3>
+                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-500">
+                          <AlertCircle className="w-5 h-5" />
+                        </div>
+                      </div>
+                      <div className="mt-3 flex items-center gap-1.5 text-xs text-rose-500">
+                        <span>SKUs with 0 sales recorded</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Product Charts Row 1: Profitability Matrix & Category Performance */}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    {/* Profitability vs Volume Matrix */}
+                    <div className={`lg:col-span-8 glass-card rounded-2xl p-6 border ${isDark ? 'border-stone-800/80' : 'border-stone-200/90 shadow-sm'}`}>
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h3 className={`font-serif text-base font-bold ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>
+                            Product Profitability &amp; Velocity Matrix
+                          </h3>
+                          <p className="text-xs text-stone-500">Margin % vs Units Sold across portfolio</p>
+                        </div>
+                        <span className="text-xs text-gold-500 font-bold">Interactive Matrix</span>
+                      </div>
+
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs">
+                          <thead>
+                            <tr className={`border-b ${isDark ? 'border-stone-800 text-stone-400' : 'border-stone-200 text-stone-600'}`}>
+                              <th className="py-2.5 font-bold">Formulation</th>
+                              <th className="py-2.5 font-bold">Category</th>
+                              <th className="py-2.5 font-bold text-right">Price</th>
+                              <th className="py-2.5 font-bold text-center">Margin %</th>
+                              <th className="py-2.5 font-bold text-center">Units Sold</th>
+                              <th className="py-2.5 font-bold text-right">Revenue</th>
+                              <th className="py-2.5 font-bold text-center">Stock</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-stone-800/40">
+                            {(productAnalyticsData?.profMatrix || []).map((p, i) => (
+                              <tr key={p.id || i} className="hover:bg-stone-500/5 transition-colors cursor-pointer" onClick={() => setSelectedProductDrillDown(p)}>
+                                <td className="py-3 flex items-center gap-2">
+                                  <img src={p.image} alt={p.name} className="w-7 h-7 rounded-lg object-contain bg-white p-0.5 border" />
+                                  <span className={`font-bold ${isDark ? 'text-stone-200' : 'text-stone-900'}`}>{p.name}</span>
+                                </td>
+                                <td className="py-3 text-stone-400">{p.category}</td>
+                                <td className="py-3 text-right font-serif">₹{p.price}</td>
+                                <td className="py-3 text-center">
+                                  <span className={`px-2 py-0.5 rounded-full font-bold text-[11px] ${
+                                    p.margin >= 65 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'
+                                  }`}>
+                                    {p.margin}%
+                                  </span>
+                                </td>
+                                <td className="py-3 text-center font-bold">{p.unitsSold}</td>
+                                <td className="py-3 text-right font-serif font-bold text-gold-500">₹{(p.revenue || 0).toLocaleString()}</td>
+                                <td className="py-3 text-center">
+                                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                    p.stock <= p.lowStockThreshold ? 'bg-red-500/20 text-red-400' : 'bg-emerald-500/20 text-emerald-400'
+                                  }`}>
+                                    {p.stock} units
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Category Performance BarChart */}
+                    <div className={`lg:col-span-4 glass-card rounded-2xl p-6 border ${isDark ? 'border-stone-800/80' : 'border-stone-200/90 shadow-sm'}`}>
+                      <h3 className={`font-serif text-base font-bold ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>
+                        Category Revenue Performance
+                      </h3>
+                      <p className="text-xs text-stone-500 mb-4">Gross sales generated per botanical family</p>
+
+                      <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={productAnalyticsData?.categoryPerformance || []} layout="vertical">
+                            <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#292524' : '#e7e5e4'} />
+                            <XAxis type="number" stroke={isDark ? '#a8a29e' : '#78716c'} tick={{ fontSize: 11 }} />
+                            <YAxis type="category" dataKey="category" stroke={isDark ? '#a8a29e' : '#78716c'} tick={{ fontSize: 11 }} width={90} />
+                            <Tooltip contentStyle={{ backgroundColor: isDark ? '#1c1917' : '#ffffff', borderRadius: '10px' }} />
+                            <Bar dataKey="revenue" fill="#C6A45B" radius={[0, 6, 6, 0]} name="Revenue (₹)" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Product Charts Row 2: Cross-Sell & Rating Distribution */}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    {/* Cross-Sell Pairs */}
+                    <div className={`lg:col-span-6 glass-card rounded-2xl p-6 border ${isDark ? 'border-stone-800/80' : 'border-stone-200/90 shadow-sm'}`}>
+                      <h3 className={`font-serif text-base font-bold ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>
+                        Frequently Bought Together (Cross-Sell)
+                      </h3>
+                      <p className="text-xs text-stone-500 mb-4">Product pairs co-purchased in basket orders</p>
+
+                      <div className="space-y-3">
+                        {(productAnalyticsData?.crossSellPairs || []).map((pair, idx) => (
+                          <div key={pair.pair || idx} className={`p-3.5 rounded-xl border flex items-center justify-between ${
+                            isDark ? 'bg-stone-900/60 border-stone-800' : 'bg-stone-50 border-stone-200'
+                          }`}>
+                            <div className="flex items-center gap-2">
+                              <span className="w-5 h-5 rounded-full bg-gold-500/20 text-gold-400 font-bold text-xs flex items-center justify-center">
+                                {idx + 1}
+                              </span>
+                              <span className={`font-semibold text-xs ${isDark ? 'text-stone-200' : 'text-stone-900'}`}>
+                                {pair.pair}
+                              </span>
+                            </div>
+                            <span className="text-xs font-bold text-emerald-500">
+                              {pair.count} orders ({pair.pct}%)
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Rating Breakdown */}
+                    <div className={`lg:col-span-6 glass-card rounded-2xl p-6 border ${isDark ? 'border-stone-800/80' : 'border-stone-200/90 shadow-sm'}`}>
+                      <h3 className={`font-serif text-base font-bold ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>
+                        Customer Satisfaction &amp; Reviews
+                      </h3>
+                      <p className="text-xs text-stone-500 mb-4">Star rating distribution across catalog</p>
+
+                      <div className="space-y-2.5">
+                        {[5, 4, 3, 2, 1].map(stars => {
+                          const count = productAnalyticsData?.ratingDist?.[stars - 1] || 0;
+                          const total = productAnalyticsData?.totalReviews || 1;
+                          const pct = Math.round((count / total) * 100);
+                          return (
+                            <div key={stars} className="flex items-center gap-3 text-xs">
+                              <span className="w-8 font-bold text-gold-500">{stars} ★</span>
+                              <div className="flex-1 h-2.5 rounded-full bg-stone-800/40 overflow-hidden">
+                                <div className="h-full bg-gold-500 rounded-full" style={{ width: `${pct}%` }} />
+                              </div>
+                              <span className="w-12 text-right font-medium text-stone-400">{count} ({pct}%)</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+
+
+              {/* ==================== DASHBOARD PAGE 3: STORE OPERATIONS & FULFILLMENT ==================== */}
+              {dashboardPage === 3 && (
+                <div className="space-y-6 animate-fade-in">
+                  {/* Top Store Operations KPI Cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className={`glass-card rounded-2xl p-5 hover-lift border transition-all ${isDark ? 'hover:border-gold-500/40' : 'hover:border-forest-600/40 shadow-xs'}`}>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="text-xs text-stone-500 font-bold uppercase tracking-wider">Fulfillment SLA Rate</p>
+                          <h3 className={`font-serif text-3xl font-extrabold mt-1 ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>
+                            {storeOpsData?.fulfillmentRate || 0}%
+                          </h3>
+                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                          <Truck className="w-5 h-5" />
+                        </div>
+                      </div>
+                      <div className="mt-3 flex items-center gap-1.5 text-xs text-emerald-500 font-semibold">
+                        <span>{storeOpsData?.statusMap?.delivered || 0} orders delivered safely</span>
+                      </div>
+                    </div>
+
+                    <div className={`glass-card rounded-2xl p-5 hover-lift border transition-all ${isDark ? 'hover:border-gold-500/40' : 'hover:border-forest-600/40 shadow-xs'}`}>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="text-xs text-stone-500 font-bold uppercase tracking-wider">Avg Delivery Velocity</p>
+                          <h3 className={`font-serif text-3xl font-extrabold mt-1 ${isDark ? 'text-gold-400' : 'text-forest-900'}`}>
+                            {storeOpsData?.avgFulfillmentTime || '2.4'}d
+                          </h3>
+                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-gold-500/10 flex items-center justify-center text-gold-500">
+                          <Clock className="w-5 h-5" />
+                        </div>
+                      </div>
+                      <div className="mt-3 flex items-center gap-1.5 text-xs text-stone-400">
+                        <span>Dispatch to doorstep duration</span>
+                      </div>
+                    </div>
+
+                    <div className={`glass-card rounded-2xl p-5 hover-lift border transition-all ${isDark ? 'hover:border-gold-500/40' : 'hover:border-forest-600/40 shadow-xs'}`}>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="text-xs text-stone-500 font-bold uppercase tracking-wider">Cancellation Rate</p>
+                          <h3 className={`font-serif text-3xl font-extrabold mt-1 ${isDark ? 'text-rose-400' : 'text-rose-600'}`}>
+                            {storeOpsData?.cancelRate || 0}%
+                          </h3>
+                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-500">
+                          <X className="w-5 h-5" />
+                        </div>
+                      </div>
+                      <div className="mt-3 flex items-center gap-1.5 text-xs text-rose-500">
+                        <span>{storeOpsData?.statusMap?.cancelled || 0} total cancellations</span>
+                      </div>
+                    </div>
+
+                    <div className={`glass-card rounded-2xl p-5 hover-lift border transition-all ${isDark ? 'hover:border-gold-500/40' : 'hover:border-forest-600/40 shadow-xs'}`}>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="text-xs text-stone-500 font-bold uppercase tracking-wider">Coupon Influence Rate</p>
+                          <h3 className={`font-serif text-3xl font-extrabold mt-1 ${isDark ? 'text-gold-400' : 'text-forest-900'}`}>
+                            {storeOpsData?.couponRedemptionRate || 0}%
+                          </h3>
+                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-gold-500/10 flex items-center justify-center text-gold-500">
+                          <Tag className="w-5 h-5" />
+                        </div>
+                      </div>
+                      <div className="mt-3 flex items-center gap-1.5 text-xs text-stone-400">
+                        <span>Baskets with discount codes</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Store Operations Charts Row 1: Pipeline Funnel & Daily Orders */}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    {/* Pipeline Funnel */}
+                    <div className={`lg:col-span-6 glass-card rounded-2xl p-6 border ${isDark ? 'border-stone-800/80' : 'border-stone-200/90 shadow-sm'}`}>
+                      <h3 className={`font-serif text-base font-bold ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>
+                        Order Fulfillment Funnel
+                      </h3>
+                      <p className="text-xs text-stone-500 mb-4">Pipeline stage distribution</p>
+
+                      <div className="space-y-3">
+                        {[
+                          { label: 'Pending Processing', count: storeOpsData?.statusMap?.pending || 0, color: '#3b82f6' },
+                          { label: 'Formulation / Packed', count: storeOpsData?.statusMap?.processing || 0, color: '#f59e0b' },
+                          { label: 'In Transit (Courier)', count: storeOpsData?.statusMap?.shipped || 0, color: '#8b5cf6' },
+                          { label: 'Delivered to Customer', count: storeOpsData?.statusMap?.delivered || 0, color: '#10b981' },
+                          { label: 'Cancelled / Returned', count: storeOpsData?.statusMap?.cancelled || 0, color: '#ef4444' }
+                        ].map((st, idx) => {
+                          const total = storeOpsData?.totalOrders || 1;
+                          const pct = Math.round((st.count / total) * 100);
+                          return (
+                            <div key={st.label} className="space-y-1">
+                              <div className="flex items-center justify-between text-xs">
+                                <span className={`font-semibold ${isDark ? 'text-stone-200' : 'text-stone-800'}`}>{st.label}</span>
+                                <span className="font-bold" style={{ color: st.color }}>{st.count} orders ({pct}%)</span>
+                              </div>
+                              <div className="h-3 rounded-full bg-stone-800/40 overflow-hidden">
+                                <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.max(5, pct)}%`, backgroundColor: st.color }} />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Day of Week Sales */}
+                    <div className={`lg:col-span-6 glass-card rounded-2xl p-6 border ${isDark ? 'border-stone-800/80' : 'border-stone-200/90 shadow-sm'}`}>
+                      <h3 className={`font-serif text-base font-bold ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>
+                        Revenue by Day of the Week
+                      </h3>
+                      <p className="text-xs text-stone-500 mb-4">Weekly ordering demand patterns</p>
+
+                      <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={storeOpsData?.dayOfWeekData || []}>
+                            <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#292524' : '#e7e5e4'} />
+                            <XAxis dataKey="day" stroke={isDark ? '#a8a29e' : '#78716c'} tick={{ fontSize: 11 }} />
+                            <YAxis stroke={isDark ? '#a8a29e' : '#78716c'} tick={{ fontSize: 11 }} />
+                            <Tooltip contentStyle={{ backgroundColor: isDark ? '#1c1917' : '#ffffff', borderRadius: '10px' }} />
+                            <Bar dataKey="revenue" fill="#10b981" radius={[6, 6, 0, 0]} name="Revenue (₹)" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Store Operations Row 2: Coupon Performance & Regional SLAs */}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    {/* Coupon Performance */}
+                    <div className={`lg:col-span-6 glass-card rounded-2xl p-6 border ${isDark ? 'border-stone-800/80' : 'border-stone-200/90 shadow-sm'}`}>
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h3 className={`font-serif text-base font-bold ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>
+                            Promotional Coupon Efficiency
+                          </h3>
+                          <p className="text-xs text-stone-500">Usage counts, discount given &amp; gross revenue</p>
+                        </div>
+                        <button onClick={() => setActiveTab('coupons')} className="text-xs font-bold text-gold-500 hover:underline">
+                          Manage Coupons
+                        </button>
+                      </div>
+
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs">
+                          <thead>
+                            <tr className={`border-b ${isDark ? 'border-stone-800 text-stone-400' : 'border-stone-200 text-stone-600'}`}>
+                              <th className="py-2.5 font-bold">Code</th>
+                              <th className="py-2.5 font-bold text-center">Uses</th>
+                              <th className="py-2.5 font-bold text-right">Discount Given</th>
+                              <th className="py-2.5 font-bold text-right">Revenue Generated</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-stone-800/40">
+                            {(storeOpsData?.couponPerf || []).map((cpn, i) => (
+                              <tr key={cpn.code || i} className="hover:bg-stone-500/5 transition-colors">
+                                <td className="py-3 font-mono font-bold text-gold-500">{cpn.code}</td>
+                                <td className="py-3 text-center font-bold">{cpn.count}</td>
+                                <td className="py-3 text-right font-serif text-rose-400">₹{(cpn.totalDiscount || 0).toLocaleString()}</td>
+                                <td className="py-3 text-right font-serif font-bold text-emerald-500">₹{(cpn.revenue || 0).toLocaleString()}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Regional SLA Performance */}
+                    <div className={`lg:col-span-6 glass-card rounded-2xl p-6 border ${isDark ? 'border-stone-800/80' : 'border-stone-200/90 shadow-sm'}`}>
+                      <h3 className={`font-serif text-base font-bold ${isDark ? 'text-stone-100' : 'text-stone-900'}`}>
+                        Regional Courier SLA Times
+                      </h3>
+                      <p className="text-xs text-stone-500 mb-4">Average days to delivery by state</p>
+
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs">
+                          <thead>
+                            <tr className={`border-b ${isDark ? 'border-stone-800 text-stone-400' : 'border-stone-200 text-stone-600'}`}>
+                              <th className="py-2.5 font-bold">State / Region</th>
+                              <th className="py-2.5 font-bold text-center">Total Shipments</th>
+                              <th className="py-2.5 font-bold text-right">Avg Dispatch → Doorstep</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-stone-800/40">
+                            {(storeOpsData?.regionData || []).map((r, i) => (
+                              <tr key={r.state || i} className="hover:bg-stone-500/5 transition-colors">
+                                <td className={`py-3 font-semibold ${isDark ? 'text-stone-200' : 'text-stone-800'}`}>{r.state}</td>
+                                <td className="py-3 text-center font-bold">{r.orders}</td>
+                                <td className="py-3 text-right font-bold text-gold-500">{r.avgDays} days</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
 
             </div>
           )}
